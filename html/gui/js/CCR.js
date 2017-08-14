@@ -2,7 +2,7 @@
 // Monkey patching in Date.now in case it's not here already
 // This is for IE8-. In IE9+ ( even IE9 w/ IE8 compatability mode on ) this works
 // just fine.
-Date.now = Date.now || function() { return +new Date; };
+Date.now = Date.now || function () { return +new Date; };
 
 // JavaScript Document
 Ext.namespace('CCR', 'CCR.xdmod', 'CCR.xdmod.ui', 'CCR.xdmod.ui.dd', 'XDMoD', 'XDMoD.constants', 'XDMoD.Module', 'XDMoD.regex', 'XDMoD.validator', 'XDMoD.utils', 'CCR.xdmod.reporting');
@@ -178,15 +178,15 @@ XDMoD.GlobalToolbar.Roadmap = {
     text: 'Roadmap',
     iconCls: 'roadmap',
     id: 'global-toolbar-roadmap',
-    handler: function() {
+    handler: function () {
         Ext.History.add('#main_tab_panel:about_xdmod?Roadmap');
     }
 };
 
 XDMoD.GlobalToolbar.Contact = function () {
-    var contactHandler = function(){
+    var contactHandler = function () {
         XDMoD.TrackEvent('Portal', 'Contact Us -> ' + this.text + ' Button Clicked');
-        switch(this.text){
+        switch (this.text) {
             case 'Send Message':
                 new XDMoD.ContactDialog().show();
                 break;
@@ -498,8 +498,8 @@ CCR.xdmod.ui.login_prompt = null;
 CCR.xdmod.ui.createUserManualLink = function (tags) {
 
     return '<div style="background-image: url(\'gui/images/user_manual.png\'); background-repeat: no-repeat; height: 36px; padding-left: 40px; padding-top: 10px">' +
-            'For more information, please refer to the <a href="javascript:void(0)" onClick="CCR.xdmod.ui.userManualNav(\'' + tags + '\')">User Manual</a>' +
-            '</div>';
+        'For more information, please refer to the <a href="javascript:void(0)" onClick="CCR.xdmod.ui.userManualNav(\'' + tags + '\')">User Manual</a>' +
+        '</div>';
 
 }; //CCR.xdmod.ui.createUserManualLink
 
@@ -567,7 +567,7 @@ CCR.safelyDecodeJSONResponse = function (response) {
     try {
         responseObject = Ext.decode(response.responseText);
     }
-    catch (e) {}
+    catch (e) { }
 
     return responseObject;
 };
@@ -584,7 +584,7 @@ CCR.checkDecodedJSONResponseSuccess = function (responseObject) {
     try {
         responseSuccessful = responseObject.success === true;
     }
-    catch (e) {}
+    catch (e) { }
 
     return responseSuccessful;
 };
@@ -622,7 +622,7 @@ CCR.submitHiddenFormImmediately = function (url, method, params) {
     temp.style.display = "none";
 
     for (var param in params) {
-        if(params.hasOwnProperty(param)){
+        if (params.hasOwnProperty(param)) {
             var opt = document.createElement("textarea");
             opt.name = param;
             opt.value = params[param];
@@ -822,7 +822,7 @@ CCR.BrowserWindow = Ext.extend(Ext.Window, {
                 text: 'Close',
                 iconCls: 'general_btn_close',
                 handler: function () {
-                    if (self.closeAction == 'close'){
+                    if (self.closeAction == 'close') {
                         self.close();
                     }
                     else {
@@ -931,20 +931,51 @@ CCR.xdmod.ui.FadeInWindow = Ext.extend(Ext.Window, { //experimental
 
 
 CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
-
     XDMoD.TrackEvent("Portal", "Sign In link clicked");
 
-    var width = 280,
-        promptHeight = 348,
-        iframeHeight = 318;
-    // Adjsut window size depending on if the XSEDE login is enabled.
-    if (CCR.xdmod.features.xsede || CCR.xdmod.isFederationConfigured) {
-        width = 540;
-        promptHeight = 486;
-        iframeHeight = 500;
-    }
+    var width = 320,
+        promptHeight = 240;
+        
     //reset referer
     XDMoD.referer = document.location.hash;
+
+    var xsedeLoginItems = [new Ext.Button({
+        text: '<img src="/gui/images/globus_login.png" style="margin-top:-0.1em"> Log in with Globus',
+        height: auto,
+        cls: 'xsede_button',
+        handler: function () {
+            window.location = '/simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=/gui/general/login.php';
+        }
+    }), {
+        xtype: 'tbtext',
+        html: '<span style="background-color: #e8e8e8 color: #000">You must have a valid XSEDE account to log in.</span>'
+    }];
+
+    var stdLoginItems = [{
+            html: '<span id="right_section_header" style="color: #000; font-size: 13px; font-weight: bold">Have an XDMoD account?</span><br/> \
+            <span id="right_section_subheader" style="color: #666">Sign in with your local XDMoD account</span> \
+            <div id="txt_login_username"></div>'
+        }, new Ext.form.TextField({
+                renderTo: 'txt_login_username',
+                width: 184,
+                enableKeyEvents: true,
+                listeners: {
+                    'keydown': function (a, e) {
+                        if (e.getCharCode() == 13) txtLoginPassword.focus();
+                    },
+                    'keyup': function (a, e) {
+                        var currentValue = a.getValue();
+                        if (a.prevValue !== currentValue) {
+                            clearLoginResponse("login_response");
+                            a.prevValue = currentValue;
+                        }
+                    }
+                }
+            }),
+
+    ];
+
+    var loginItems = CCR.xdmod.features.xsede ? xsedeLoginItems : stdLoginItems;
 
     CCR.xdmod.ui.login_prompt = new Ext.Window({
         title: "Welcome To XDMoD",
@@ -956,14 +987,14 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
         tbar: {
             items: [{
                 xtype: 'tbtext',
-                html: '<span style="color: #000">Close this window to view public information</span>'
+                html: '<span style="background-color: #e8e8e8 color: #000">Close this window to view public information</span>'
             }]
         },
         items: [
             new Ext.Panel({
                 id: 'wnd_login',
                 layout: 'fit',
-                html: '<iframe src="gui/general/login.php" frameborder=0 width=100% height=' + iframeHeight + '></iframe>'
+                items: loginItems
             })
         ],
         listeners: {
@@ -1203,12 +1234,12 @@ CCR.xdmod.ui.extractErrorMessageFromResponse = function (response, options) {
             responseObject = Ext.decode(response.responseText);
         }
     }
-    catch (e) {}
+    catch (e) { }
 
     try {
         responseMessage = responseObject.message || responseObject.status || responseMessage;
     }
-    catch (e) {}
+    catch (e) { }
 
     if (options.htmlEncode) {
         responseMessage = Ext.util.Format.htmlEncode(responseMessage);
@@ -1304,7 +1335,7 @@ CCR.xdmod.ui.gridComboRenderer = function (combo) {
 };
 
 CCR.isBlank = function (value) {
-    return !value || value === 'undefined' || !value.trim() ? true: false;
+    return !value || value === 'undefined' || !value.trim() ? true : false;
 };
 
 CCR.Types = {};
@@ -1321,7 +1352,7 @@ CCR.isType = function (value, type) {
         return Object.prototype.toString.call(value) === type;
     } else {
         return Object.prototype.toString.call(value) ===
-                Object.prototype.toString.call(type);
+            Object.prototype.toString.call(type);
     }
 };
 
@@ -1338,12 +1369,12 @@ CCR.exists = function (value) {
 CCR.merge = function (obj1, obj2) {
     var obj3 = {};
     for (var attrname1 in obj1) {
-        if(obj1.hasOwnProperty(attrname1)){
+        if (obj1.hasOwnProperty(attrname1)) {
             obj3[attrname1] = obj1[attrname1];
         }
     }
     for (var attrname in obj2) {
-        if(obj2.hasOwnProperty(attrname)){
+        if (obj2.hasOwnProperty(attrname)) {
             obj3[attrname] = obj2[attrname];
         }
     }
@@ -1352,10 +1383,10 @@ CCR.merge = function (obj1, obj2) {
 CCR.getParameter = function (name, source) {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
     var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-            results = regex.exec(source);
+        results = regex.exec(source);
     return results === null
-            ? ""
-            : decodeURIComponent(results[1].replace(/\+/g, " "));
+        ? ""
+        : decodeURIComponent(results[1].replace(/\+/g, " "));
 };
 /*
  * Process the location hash string. The string should have the form:
@@ -1403,7 +1434,7 @@ CCR.tokenize = function (hash) {
  * @param {Array} delims
  * @returns {Array}
  */
-CCR.toArray = function(value, delims) {
+CCR.toArray = function (value, delims) {
     if (!CCR.exists(value) || !CCR.isType(value, CCR.Types.String) || value.length < 1) {
         return [];
     }
@@ -1430,20 +1461,20 @@ CCR.toArray = function(value, delims) {
     return results;
 };
 
-CCR.objectToArray = function(object) {
+CCR.objectToArray = function (object) {
     if (!CCR.exists(object)) {
         return [];
     }
     var results;
     for (var property in object) {
-        if(object.hasOwnProperty(property)) {
+        if (object.hasOwnProperty(property)) {
             results = [property, object[property]];
         }
     }
     return results;
 };
 
-CCR.join = function(values, joiners) {
+CCR.join = function (values, joiners) {
 
     if (!CCR.exists(values) || !CCR.isType(values, CCR.Types.Array)) {
         return "";
@@ -1461,7 +1492,7 @@ CCR.join = function(values, joiners) {
     var joinerIndex = 0;
     var result;
 
-    var joinValue = function(value, joiners, joinerIndex) {
+    var joinValue = function (value, joiners, joinerIndex) {
         var isArray = CCR.isType(value, CCR.Types.Array);
         var holdsArrays = isArray && value.length > 0 && CCR.isType(value[0], CCR.Types.Array);
         var result = [];
@@ -1511,7 +1542,7 @@ CCR.pad = function (str, len, pad, dir) {
     return str;
 };
 
-CCR.deepEncode = function(values, options) {
+CCR.deepEncode = function (values, options) {
     if (!CCR.exists(values)) {
         return '';
     }
@@ -1538,7 +1569,7 @@ CCR.deepEncode = function(values, options) {
     }
 };
 
-CCR._encodeArray = function(values, options) {
+CCR._encodeArray = function (values, options) {
     if (!CCR.exists(values)) {
         return JSON.stringify([]);
     }
@@ -1563,8 +1594,8 @@ CCR._encodeArray = function(values, options) {
     return (left + results.join(delim) + right).trim();
 };
 
-CCR._encodeObject = function(value, options) {
-    if (!CCR.exists(value)){
+CCR._encodeObject = function (value, options) {
+    if (!CCR.exists(value)) {
         return JSON.stringify({});
     }
     options = options || {};
@@ -1575,18 +1606,18 @@ CCR._encodeObject = function(value, options) {
     var separator = options.seperator || '=';
     var results = [];
 
-    for (var property in value ) {
-        if(value.hasOwnProperty(property)){
+    for (var property in value) {
+        if (value.hasOwnProperty(property)) {
             var propertyValue = value[property];
             if (CCR.isType(propertyValue, CCR.Types.Array)) {
                 results.push(property + '=' + encodeURIComponent(CCR._encodeArray(propertyValue, {
-                            wrap: true,
-                            seperator: ':'
-                        })));
+                    wrap: true,
+                    seperator: ':'
+                })));
             } else if (CCR.isType(propertyValue, CCR.Types.Object)) {
                 results.push(property + '=' + encodeURIComponent(CCR._encodeObject(propertyValue, {
-                            wrap: true
-                        })));
+                    wrap: true
+                })));
             } else {
                 var key = wrap ? '"' + property + '"' : property;
                 results.push(key + separator + propertyValue);
@@ -1609,8 +1640,8 @@ CCR.encode = function (values) {
                 var isArray = CCR.isType(values[property], CCR.Types.Array);
                 var isObject = CCR.isType(values[property], CCR.Types.Object);
                 var value = isArray || isObject
-                        ? encodeURIComponent(CCR.deepEncode(values[property]))
-                        : values[property];
+                    ? encodeURIComponent(CCR.deepEncode(values[property]))
+                    : values[property];
                 parameters.push(property + '=' + value);
             }
         }
@@ -1640,7 +1671,7 @@ CCR.apply = function (lhs, rhs) {
         for (property in rhs) {
             if (rhs.hasOwnProperty(property)) {
                 var rhsExists = rhs[property] !== undefined
-                        && rhs[property] !== null;
+                    && rhs[property] !== null;
                 if (rhsExists) {
                     results[property] = rhs[property];
                 }
@@ -1677,18 +1708,18 @@ CCR.toInt = function (value) {
  */
 CCR.error = function (title, message, success, failure, buttons) {
     buttons = buttons || Ext.MessageBox.OK;
-    success = success || function(){};
-    failure = failure || function(){};
+    success = success || function () { };
+    failure = failure || function () { };
 
     Ext.MessageBox.show({
         title: title,
         msg: message,
         buttons: buttons,
         icon: Ext.MessageBox.ERROR,
-        fn: function(buttonId, text, options) {
+        fn: function (buttonId, text, options) {
             var compare = CCR.compare;
             if (compare.strings(buttonId, Ext.MessageBox.buttonText['no'])
-                    || compare.strings(buttonId, Ext.MessageBox.buttonText['cancel'])) {
+                || compare.strings(buttonId, Ext.MessageBox.buttonText['cancel'])) {
                 failure(buttonId, text, options);
             } else {
                 success(buttonId, text, options);
@@ -1705,7 +1736,7 @@ CCR.compare = {
             None: 'toString'
         }
     },
-    strings: function(left, right, method) {
+    strings: function (left, right, method) {
         if (!CCR.exists(left) || !CCR.exists(right)) {
             return false;
         }
@@ -1740,11 +1771,11 @@ CCR.compare = {
  *             or an instance of 'classPath' instantiated with 'config'
  *             as a constructor argument.
  **/
-CCR.getInstance = function(instancePath, classPath, config) {
-    if ( !instancePath || typeof instancePath !== 'string' ) {
+CCR.getInstance = function (instancePath, classPath, config) {
+    if (!instancePath || typeof instancePath !== 'string') {
         return;
     }
-    if ( !classPath || typeof classPath !== 'string' ) {
+    if (!classPath || typeof classPath !== 'string') {
         return;
     }
 
@@ -1761,14 +1792,14 @@ CCR.getInstance = function(instancePath, classPath, config) {
      *
      * @return {*} the result of walking the provided 'path'.
      **/
-    var getReference = function(path, callback) {
-            callback = callback !== undefined
-                ? callback
-                : function(previous, current) {
-                    return previous[current];
-                };
+    var getReference = function (path, callback) {
+        callback = callback !== undefined
+            ? callback
+            : function (previous, current) {
+                return previous[current];
+            };
 
-        return path.split('.').reduce( callback, window );
+        return path.split('.').reduce(callback, window);
     };
 
     /**
@@ -1786,7 +1817,7 @@ CCR.getInstance = function(instancePath, classPath, config) {
      * @return {*} The return value of invoking 'classPath' or, failing that,
      *             the value of 'classPath'.
      **/
-    var instantiateClass = function(classPath, config) {
+    var instantiateClass = function (classPath, config) {
         var Class = getReference(classPath);
         return typeof Class === 'function' ? new Class(config) : Class;
     };
@@ -1795,8 +1826,8 @@ CCR.getInstance = function(instancePath, classPath, config) {
     if (!result) {
         result = getReference(
             instancePath,
-            function(previous, current) {
-                if ( previous[current] === undefined ) {
+            function (previous, current) {
+                if (previous[current] === undefined) {
                     return previous[current] = instantiateClass(classPath, config);
                 } else {
                     return previous[current];
@@ -1906,18 +1937,18 @@ Ext.override(Ext.ToolTip, {
 // override 3.4.0 to ensure that the grid stops editing if the view is refreshed
 // actual bug: removing grid lines with active lookup editor didn't hide editor
 Ext.grid.GridView.prototype.processRows =
-        Ext.grid.GridView.prototype.processRows.createInterceptor(function () {
-            if (this.grid) {
-                this.grid.stopEditing(true);
-            }
-        });
+    Ext.grid.GridView.prototype.processRows.createInterceptor(function () {
+        if (this.grid) {
+            this.grid.stopEditing(true);
+        }
+    });
 
 // override 3.4.0 to fix issue with chart labels losing their labelRenderer after hide/show
 Ext.override(Ext.chart.CartesianChart, {
     createAxis: function (axis, value) {
         var o = Ext.apply({}, value),
-                ref,
-                old;
+            ref,
+            old;
 
         if (this[axis]) {
             old = this[axis].labelFunction;
@@ -1955,7 +1986,7 @@ Ext.override(Ext.grid.RowSelectionModel, {
 
 // override to allow menu items to have a tooltip property
 Ext.override(Ext.menu.Item, {
-    onRender : function(container, position){
+    onRender: function (container, position) {
         if (!this.itemTpl) {
             this.itemTpl = Ext.menu.Item.prototype.itemTpl = new Ext.XTemplate(
                 '<a id="{id}" class="{cls} x-unselectable" hidefocus="true" unselectable="on" href="{href}"',
@@ -1966,7 +1997,7 @@ Ext.override(Ext.menu.Item, {
                 '<img src="{icon}" class="x-menu-item-icon {iconCls}"/>',
                 '<span class="x-menu-item-text">{text}</span>',
                 '</a>'
-                );
+            );
         }
         var a = this.getTemplateArgs();
         this.el = position ? this.itemTpl.insertBefore(position, a, true) : this.itemTpl.append(container, a, true);
