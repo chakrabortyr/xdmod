@@ -25,7 +25,7 @@ class XDSamlAuthentication
             try {
                 $authSource = \xd_utilities\getConfiguration('authentication', 'source');
             } catch (Exception $e) {
-                $authSource = null;
+                $authSource = 'xdmod-sp';
             }
             if (!is_null($authSource) && array_search($authSource, $this->_sources) !== false) {
                 $this->_as = new \SimpleSAML_Auth_Simple($authSource);
@@ -48,6 +48,7 @@ class XDSamlAuthentication
     public function getXdmodAccount()
     {
         $samlAttrs = $this->_as->getAttributes();
+
         if (!isset($samlAttrs["username"])) {
             $thisUserName = null;
         } else {

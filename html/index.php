@@ -112,23 +112,7 @@
       <meta name="keywords" content="<?php print $meta_keywords; ?>">
 
       <title><?php print $page_title; ?></title>
-
-      <!-- Disco Juice Inject Here --> 
-      <link rel="stylesheet" type="text/css" href="https://cdn.discojuice.org/css/discojuice.css"/>
-      <script type="text/javascript" src="https://cdn.discojuice.org/engine/discojuice-dev.min.js"/>
-      <script type="text/javascript">
-          DiscoJuice.Hosted.setup(
-            {
-              "target": "a#sign-in-link",
-              "title": "Globus",
-              "spentityid": "https://bridge.uninett.no/saml2/entityid",
-              "responseurl": "http://bridge.uninett.no/response.html",
-              "redirectURL": "http://bridge.uninett.no/login?idp=",
-              "feeds": ["edugain", "InCommon"]
-            }
-          );
-      </script>
-
+      
       <link rel="shortcut icon" href="gui/icons/favicon_static.ico" />
       <script type="text/javascript" src="gui/lib/oldie-console-patch.js"></script>
       <?php if (!$userLoggedIn): ?>
@@ -558,8 +542,6 @@
                   profileEditor.init();
 
                }).defer(1000);
-
-            };
 
          <?php } ?>
          <?php endif; ?>

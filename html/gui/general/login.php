@@ -16,8 +16,6 @@ if ($auth && $auth->isSamlConfigured()) {
             \XDSessionManager::recordLogin($xdmodUser);
             $formal_name = $xdmodUser->getFormalName();
         } else {
-            print($xdmodUser);
-            exit();
             $samlError = $xdmodUser ? $xdmodUser : "INACTIVE";
         }
     } else {
@@ -162,43 +160,7 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
 
     <script type="text/javascript">
 
-        <?php if ($xsedeLogin) : ?>
-        function launchXSEDEPrompt() {
-
-            parent.XDMoD.TrackEvent('Login Window', 'Clicked on Login With XSEDE button');
-
-            window.open('../../oauth/entrypoint.php', 'windowname2',
-                'width=850, \
-                height=420, \
-                directories=no, \
-                location=no, \
-                menubar=no, \
-                resizable=no, \
-                scrollbars=0, \
-                status=no, \
-                toolbar=no');
-
-            return false;
-
-        }//launchXSEDEPrompt
-
-        // ------------------------------------------------
-
-        function postXSEDELoginProcedure(wChild, formalName, token) {
-
-            parent.XDMoD.TrackEvent('Login Window', 'Successful login using XSEDE credentials', formalName + ' (Token: ' + token + ')');
-
-            var public_token = parent.XDMoD.REST.token;
-            parent.XDMoD.REST.token = token;
-
-            parent.XDMoD.TrackEvent('Login Window', 'Login from public session', '(Token: ' + public_token + ')', true);
-
-            location.href = '../gui/general/login.php?xd_user_formal_name=' + formalName;
-
-            wChild.close();
-
-        }//postXSEDELoginProcedure
-
+        <?php if ($xsedeLogin) : ?> 
         // ------------------------------------------------
 
         function checkXDUsername(username) {
@@ -547,17 +509,15 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
 
             new Ext.Button({
 
-                text: '<img src="btn_xsede_signin.png" style="margin-top: ' + xsede_button_margin + '">',
+                text: '<img src="../images/globus_login.png" style="margin-top: ' + xsede_button_margin + '">',
                 height: 40,
                 cls: 'xsede_button',
                 handler: function () {
-                    launchXSEDEPrompt();
+                    window.location = '../../simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=./gui/general/login.php';
                 },
                 renderTo: 'btn_xsede_login'
-
             });
             <?php endif; ?>
-
         });//Ext.onReady
 
     </script>
@@ -581,8 +541,8 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
 
                                     <tr>
                                         <td height=10>
-                                            <b style="color: #000; font-size: 13px">Have an XSEDE account?</b>
-                                            <br/><span style="color: #666">Click below to sign in with your XSEDE account</span>
+                                            <b style="color: #000; font-size: 13px">Have a Globus account?</b>
+                                            <br/><span style="color: #666">Click below to sign in with Globus Auth: </span>
                                         </td>
                                     </tr>
 
@@ -655,7 +615,7 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
                         <?php endif; ?>
 
                         <?php
-                        if ($auth && $auth->isSamlConfigured()) {
+                        if (!$xsedeLogin && $auth && $auth->isSamlConfigured()) {
                             $authLogin = $auth->getLoginLink();
                             //TODO:  Look into internationalization
                             $organization = htmlspecialchars($authLogin['organization']['en']);
