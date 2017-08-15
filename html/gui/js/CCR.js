@@ -941,7 +941,7 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
 
     var xsedeLoginItems = [new Ext.Button({
         text: '<img src="/gui/images/globus_login.png" style="margin-top:-0.1em"> Log in with Globus',
-        height: auto,
+        autoHeight: true,
         cls: 'xsede_button',
         handler: function () {
             window.location = '/simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=/gui/general/login.php';
@@ -952,16 +952,17 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
     }];
 
     var stdLoginItems = [{
+            xtype: 'tbtext',
             html: '<span id="right_section_header" style="color: #000; font-size: 13px; font-weight: bold">Have an XDMoD account?</span><br/> \
             <span id="right_section_subheader" style="color: #666">Sign in with your local XDMoD account</span> \
             <div id="txt_login_username"></div>'
         }, new Ext.form.TextField({
-                renderTo: 'txt_login_username',
+                text: '',
                 width: 184,
                 enableKeyEvents: true,
                 listeners: {
                     'keydown': function (a, e) {
-                        if (e.getCharCode() == 13) txtLoginPassword.focus();
+                        if (e.getCharCode() == 13) this.focus();
                     },
                     'keyup': function (a, e) {
                         var currentValue = a.getValue();
