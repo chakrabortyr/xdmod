@@ -48,6 +48,15 @@ class XDSamlAuthentication
     public function getXdmodAccount()
     {
         $samlAttrs = $this->_as->getAttributes();
+        
+        // When we get names passed as one variable, a la "Name": "Lastname, First"
+        // we map it to first name. We should split them out before this check
+        if (isset($samlAttrs["first_name"]) && strpos($samlAttrs["first_name"][0], ',') !== false) {
+            $fullname = explode(',', $samlAttrs["first_name"][0]);
+
+            $samlAttrs["last_name"] = array($fullname[0]);
+            $samlAttrs["first_name"] = array($fullname[1]);
+        }
 
         if (!isset($samlAttrs["username"])) {
             $thisUserName = null;
@@ -69,6 +78,7 @@ class XDSamlAuthentication
             }
             $emailAddress = !empty($samlAttrs['email_address'][0]) ? $samlAttrs['email_address'][0] : NO_EMAIL_ADDRESS_SET;
             $personId = \DataWarehouse::getPersonIdByUsername($thisUserName);
+
             if (!isset($samlAttrs["first_name"])) {
                 $samlAttrs["first_name"] = array("UNKNOWN");
             }
