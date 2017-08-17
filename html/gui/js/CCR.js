@@ -956,6 +956,12 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
                     a.prevValue = currentValue;
                 }
             }
+        },
+        margins : {
+            top: 0,
+            right: 0,
+            bottom: 5,
+            left: 0
         }
     });
 
@@ -976,6 +982,12 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
                     a.prevValue = currentValue;
                 }
             }
+        },
+        margins : {
+            top: 0,
+            right: 0,
+            bottom: 5,
+            left: 0
         }
     });
 
@@ -1059,6 +1071,12 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
         cls: 'xsede_button',
         handler: function () {
             window.location = '/simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=/gui/general/login.php';
+        },
+        margins : {
+            top: 0,
+            right: 0,
+            bottom: 5,
+            left: 0
         }
     }), {
         xtype: 'tbtext',
@@ -1074,6 +1092,12 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
         cls: 'xsede_button',
         handler: function () {
             window.location = '/simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=/gui/general/login.php';
+        },
+        margins : {
+            top: 2.5,
+            right: 0,
+            bottom: 2.5,
+            left: 0
         }
     }), {
         xtype: 'tbtext',
@@ -1131,6 +1155,12 @@ CCR.xdmod.ui.forgot_password = function () {
                     a.prevValue = currentValue;
                 }
             }
+        },
+        margins : {
+            top: 0,
+            right: 0,
+            bottom: 5,
+            left: 0
         }
     });
 
