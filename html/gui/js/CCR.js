@@ -929,15 +929,129 @@ CCR.xdmod.ui.FadeInWindow = Ext.extend(Ext.Window, { //experimental
     }
 });
 
+var switchLoginView = function () {
+    CCR.xdmod.ui.actionLogin(null, null, true);
+}
 
-CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
+CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
     XDMoD.TrackEvent("Portal", "Sign In link clicked");
 
-    var width = 320,
-        promptHeight = 240;
-        
     //reset referer
     XDMoD.referer = document.location.hash;
+
+    var txtLoginUsername = new Ext.form.TextField({
+        emptyText: 'Your Username',
+        width: 184,
+        height: 22,
+        id: 'txt_login_username',
+        enableKeyEvents: true,
+        name: 'username',
+        listeners: {
+            'keydown': function (a, e) {
+                if (e.getCharCode() == 13) this.focus();
+            },
+            'keyup': function (a, e) {
+                var currentValue = a.getValue();
+                if (a.prevValue !== currentValue) {
+                    a.prevValue = currentValue;
+                }
+            }
+        }
+    });
+
+    var txtLoginPassword = new Ext.form.TextField({
+        emptyText: 'Your Password',
+        width: 184,
+        height: 22,
+        enableKeyEvents: true,
+        id: 'txt_login_password',
+        name: 'password',
+        listeners: {
+            'keydown': function (a, e) {
+                if (e.getCharCode() == 13) this.focus();
+            },
+            'keyup': function (a, e) {
+                var currentValue = a.getValue();
+                if (a.prevValue !== currentValue) {
+                    a.prevValue = currentValue;
+                }
+            }
+        }
+    });
+
+    var stdLoginItems = [txtLoginUsername, txtLoginPassword, new Ext.Button({
+        text: 'Log in locally',
+        autoHeight: true,
+        cls: 'xsede_button',
+        handler: function () {
+            if (txtLoginUsername.getValue().length == 0) {
+                presentLoginResponse('You must specify a username.', false, "login_response", function () {
+                    txtLoginUsername.focus();
+                });
+                return;
+            }
+
+            if (txtLoginPassword.getValue().length == 0) {
+                presentLoginResponse('You must specify a password.', false, "login_response", function () {
+                    txtLoginPassword.focus();
+                });
+                return;
+            }
+
+            var restArgs = {
+                'username': txtLoginUsername.getValue(),
+                'password': txtLoginPassword.getValue()
+            };
+
+            Ext.Ajax.request({
+                url: '/rest/v0.1/auth/login',
+                method: 'POST',
+                params: restArgs,
+                callback: function (options, success, response) {
+                    var data = CCR.safelyDecodeJSONResponse(response);
+                    if (success) {
+                        success = CCR.checkDecodedJSONResponseSuccess(data);
+                    }
+
+                    if (success) {
+                        XDMoD.TrackEvent('Login Window', 'Successful login', txtLoginUsername.getValue());
+
+                        XDMoD.REST.token = data.results.token;
+                        XDMoD.TrackEvent('Login Window', 'Login from public session', '(Token: ' + XDMoD.REST.token + ')', true);
+
+                        presentLoginResponse('Welcome, ' + Ext.util.Format.htmlEncode(data.results.name) + '.', true, "login_response");
+
+                        parent.location.href = '../../index.php' + parent.XDMoD.referer;
+                        parent.location.hash = parent.XDMoD.referer;
+                        parent.location.reload();
+                    } else {
+                        XDMoD.TrackEvent('Login Window', 'Successful login', txtLoginUsername.getValue());
+                        var message = data.message || 'There was an error encountered while logging in. Please try again.';
+                        message = Ext.util.Format.htmlEncode(message);
+                        message = message.replace(
+                            CCR.xdmod.support_email,
+                            '<br /><a href="mailto:' + CCR.xdmod.support_email + '?subject=Problem Logging In">' + CCR.xdmod.support_email + '</a>'
+                        );
+
+                        presentLoginResponse(
+                            message,
+                            false,
+                            "login_response",
+                            function () {
+                                txtLoginPassword.focus(true);
+                            }
+                        );//presentLoginResponse
+                    } // if(success)
+                }
+            });
+        }
+    }), {
+            xtype: 'tbtext',
+            id: 'login_response'
+        }, {
+            xtype: 'tbtext',
+            html: '<span style="padding-right: 4px; padding-top: 9px"><a href="javascript:CCR.xdmod.ui.forgot_password()">Click here</a> to reset your password.</span>'
+        }];
 
     var xsedeLoginItems = [new Ext.Button({
         text: '<img src="/gui/images/globus_login.png" style="margin-top:-0.1em"> Log in with Globus',
@@ -949,65 +1063,142 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
     }), {
         xtype: 'tbtext',
         html: '<span style="background-color: #e8e8e8 color: #000">You must have a valid XSEDE account to log in.</span>'
+    }, {
+        xtype: 'tbtext',
+        html: '<span style="padding-right: 4px; padding-top: 9px"><a href="javascript:switchLoginView()">Click here</a> to log in with your local account instead.</span>'
     }];
 
-    var stdLoginItems = [{
-            xtype: 'tbtext',
-            html: '<span id="right_section_header" style="color: #000; font-size: 13px; font-weight: bold">Have an XDMoD account?</span><br/> \
-            <span id="right_section_subheader" style="color: #666">Sign in with your local XDMoD account</span> \
-            <div id="txt_login_username"></div>'
-        }, new Ext.form.TextField({
-                text: '',
-                width: 184,
-                enableKeyEvents: true,
-                listeners: {
-                    'keydown': function (a, e) {
-                        if (e.getCharCode() == 13) this.focus();
-                    },
-                    'keyup': function (a, e) {
-                        var currentValue = a.getValue();
-                        if (a.prevValue !== currentValue) {
-                            clearLoginResponse("login_response");
-                            a.prevValue = currentValue;
-                        }
-                    }
-                }
-            }),
+    var federatedLoginItems = [new Ext.Button({
+        text: 'Log in',
+        autoHeight: true,
+        cls: 'xsede_button',
+        handler: function () {
+            window.location = '/simplesaml/module.php/core/as_login.php?AuthId=xdmod-sp&ReturnTo=/gui/general/login.php';
+        }
+    }), {
+        xtype: 'tbtext',
+        html: '<span style="background-color: #e8e8e8 color: #000">You must have a valid Federation account to log in.</span>'
+    }, {
+        xtype: 'tbtext',
+        html: '<span style="padding-right: 4px; padding-top: 9px"><a href="javascript:switchLoginView()">Click here</a> to log in with your local account instead.</span>'
+    }];
 
-    ];
+    var loginItems, title;
 
-    var loginItems = CCR.xdmod.features.xsede ? xsedeLoginItems : stdLoginItems;
+    if (!forceLocalView) {
+        loginItems = CCR.xdmod.features.xsede ? xsedeLoginItems : CCR.xdmod.isFederationConfigured ? federatedLoginItems : stdLoginItems;
+        title = CCR.xdmod.features.xsede ? "Sign in with Globus" : CCR.xdmod.isFederationConfigured ? "Sign in with Federation" : "Sign in locally"
+    } else {
+        loginItems = stdLoginItems;
+        title = "Sign in locally";
+    }
 
     CCR.xdmod.ui.login_prompt = new Ext.Window({
-        title: "Welcome To XDMoD",
-        width: width,
-        height: promptHeight,
+        title: title,
+        width: 320,
+        height: 132,
         modal: true,
         animate: true,
         resizable: false,
-        tbar: {
-            items: [{
-                xtype: 'tbtext',
-                html: '<span style="background-color: #e8e8e8 color: #000">Close this window to view public information</span>'
-            }]
-        },
-        items: [
-            new Ext.Panel({
-                id: 'wnd_login',
-                layout: 'fit',
-                items: loginItems
-            })
-        ],
+        draggable: false,
+        items: loginItems,
         listeners: {
             close: function () {
                 XDMoD.TrackEvent('Login Window', 'Closed Window');
-            } //close
-        } //listeners
-    }); //CCR.xdmod.ui.login_prompt
+            }
+        }
+    });
 
     CCR.xdmod.ui.login_prompt.show(animateTarget);
     CCR.xdmod.ui.login_prompt.center();
 }; //actionLogin
+
+CCR.xdmod.ui.forgot_password = function () {
+    var txtEmailAddress = new Ext.form.TextField({
+        emptyText: 'Your Email Address',
+        width: 184,
+        height: 22,
+        enableKeyEvents: true,
+        id: 'txt_email_address',
+        name: 'fpemail',
+        listeners: {
+            'keydown': function (a, e) {
+                if (e.getCharCode() == 13) this.focus();
+            },
+            'keyup': function (a, e) {
+                var currentValue = a.getValue();
+                if (a.prevValue !== currentValue) {
+                    a.prevValue = currentValue;
+                }
+            }
+        }
+    });
+
+    var panelItems = [{
+        xtype: 'tbtext',
+        html: '<span style="background-color: #e8e8e8 color: #000">Enter the email address associated with your account to reset your password: </span>'
+    }, txtEmailAddress, new Ext.Button({
+        text: 'Reset My Password',
+        autoHeight: true,
+        cls: 'xsede_button',
+        handler: function () {
+            var objParams = {
+                operation: 'pass_reset',
+                email: txtEmailAddress.getValue()
+            };
+
+            var conn = new Ext.data.Connection;
+            conn.request({
+                url: '/controllers/user_auth.php',
+                params: objParams,
+                method: 'POST',
+                callback: function (options, success, response) {
+                    if (success) {
+                        var json = Ext.util.JSON.decode(response.responseText);
+
+                        switch (json.status) {
+                            case 'invalid_email_address':
+                                presentLoginResponse('A valid e-mail address must be specified.', false, "reset_response"); reset_response
+                                break;
+                            case 'no_user_mapping':
+                                presentLoginResponse('No XDMoD user could be associated with this e-mail address.', false, "reset_response");
+                                break;
+                            case 'multiple_accounts_mapped':
+                                presentLoginResponse('Multiple XDMoD accounts are associated with this e-mail address.', false, "reset_response");
+                                break;
+                            case 'success':
+                                presentLoginResponse('Password reset instructions have been sent to this e-mail address.', true, "reset_response");
+                                break;
+                        }
+                    } else {
+                        presentLoginResponse('There was a problem connecting to the portal service provider.', false, "reset_response");
+                    }
+                    txtEmailAddress.focus();
+                }
+            });
+        }
+    }), {
+        xtype: 'tbtext',
+        id: 'reset_response'
+    }]
+
+    CCR.xdmod.ui.forgot_password_prompt = new Ext.Window({
+        title: "Forgot your password?",
+        width: 320,
+        height: 132,
+        modal: true,
+        draggable: false,
+        resizable: false,
+        listeners: {
+            close: function () {
+                XDMoD.TrackEvent('Forgot Password Window', 'Closed Window');
+            }
+        },
+        items: panelItems
+    });
+    CCR.xdmod.ui.forgot_password_prompt.show();
+    CCR.xdmod.ui.forgot_password_prompt.center();
+}
 
 // -----------------------------------
 
