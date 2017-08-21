@@ -972,6 +972,7 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget, forceLocalView) {
         enableKeyEvents: true,
         id: 'txt_login_password',
         name: 'password',
+        inputType: 'password',
         listeners: {
             'keydown': function (a, e) {
                 if (e.getCharCode() == 13) this.focus();
