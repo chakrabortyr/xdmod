@@ -19,9 +19,11 @@
  * who is to blame.
  *
  */
-XDMoD.Module.MetricExplorer = function (config) {
+XDMoD.Module.MetricExplorer = function(config) {
+
     XDMoD.Module.MetricExplorer.superclass.constructor.call(this, config);
-}; // XDMoD.Module.MetricExplorer
+
+}; //XDMoD.Module.MetricExplorer
 
 // ===========================================================================
 
@@ -95,7 +97,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
      *                                     be loaded. (Defaults to true.)
      * @param {XDMoD.Module.MetricExplorer} (Optional) instance
      */
-    setConfig: function (config, name, ensureNameIsUnique, instance) {
+    setConfig: function(config, name, ensureNameIsUnique, instance) {
         ensureNameIsUnique = Ext.isDefined(ensureNameIsUnique) ? ensureNameIsUnique : true;
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
@@ -142,11 +144,11 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             instance.createQueryFunc(null, null, name, config, false, config, true);
             instance.reloadChartFunc();
             resetListeners.apply(instance);
-        } // loadSummaryChart
+        } //loadSummaryChart
 
         instance.maximizeScale();
-        instance.on('dwdesc_loaded', function () {
-            instance.queriesStore.on('load', function (/* t, records*/) {
+        instance.on('dwdesc_loaded', function() {
+            instance.queriesStore.on('load', function( /*t, records*/ ) {
                 loadSummaryChart();
             }, this, {
                 single: true
@@ -157,22 +159,22 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             single: true
         });
         instance.dwDescriptionStore.load();
-    }, // setConfig
+    }, //setConfig
 
     // ------------------------------------------------------------------
-    chartContextMenu: function (event, newchart, instance) {
+    chartContextMenu: function(event, newchart, instance) {
+
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
 
         if (event && event.target &&
-            ((event.target.innerHTML && event.target.innerHTML === 'Reset zoom') ||
-                (event.target.firstChild && event.target.firstChild.data && event.target.firstChild.data === 'Reset zoom'))) {
-            return; // if reset zoom button, return
+            ((event.target.innerHTML && event.target.innerHTML === "Reset zoom") ||
+                (event.target.firstChild && event.target.firstChild.data && event.target.firstChild.data === "Reset zoom"))) {
+            return; //if reset zoom button, return
         }
 
-        var x,
-            y;
+        var x, y;
 
         if (event && event.xAxis && event.yAxis && event.xAxis[0] && event.yAxis[0]) {
             x = event.xAxis[0].value;
@@ -184,8 +186,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         }
 
         XDMoD.TrackEvent('Metric Explorer', 'Clicked on chart to access chart context menu', Ext.encode({
-            x: x,
-            y: y
+            'x': x,
+            'y': y
         }));
 
         var randomNum = Math.random();
@@ -199,7 +201,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 checked: fontValue == c,
                 xtype: 'menucheckitem',
                 group: 'font_size' + randomNum,
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     instance.fontSizeSlider.setValue(this.value);
                     instance.saveQuery();
                 }
@@ -207,13 +209,13 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         }
 
         var allLogScale;
-        instance.datasetStore.each(function (record) {
+        instance.datasetStore.each(function(record) {
             allLogScale = (allLogScale === undefined || allLogScale === true) && record.get('log_scale');
         });
 
         var menu;
         if (newchart) {
-            if (instance.menuRefs.newChart) {
+            if(instance.menuRefs.newChart){
                 instance.menuRefs.newChart.removeAll(false);
                 instance.menuRefs.newChart.destroy();
             }
@@ -234,8 +236,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     }
                 ],
                 listeners: {
-                    show: {
-                        fn: function (menu) {
+                    'show': {
+                        fn: function(menu) {
                             menu.getEl().slideIn('t', {
                                 easing: 'easeIn',
                                 duration: 0.2
@@ -244,8 +246,9 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     }
                 }
             });
-        } else {
-            if (instance.menuRefs.chartOptions) {
+        }
+        else {
+            if(instance.menuRefs.chartOptions){
                 instance.menuRefs.chartOptions.remove('metric-explorer-chartoptions-add-data', false);
                 instance.menuRefs.chartOptions.remove('metric-explorer-chartoptions-add-filter', false);
                 instance.menuRefs.chartOptions.destroy();
@@ -257,8 +260,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 showSeparator: false,
                 ignoreParentClicks: true,
                 listeners: {
-                    show: {
-                        fn: function (menu) {
+                    'show': {
+                        fn: function(menu) {
                             menu.getEl().slideIn('t', {
                                 easing: 'easeIn',
                                 duration: 0.2
@@ -275,7 +278,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         disabled: isPie,
                         group: 'dataset_type' + randomNum,
                         listeners: {
-                            checkchange: function (/* t, check*/) {
+                            checkchange: function( /*t, check*/ ) {
                                 instance.timeseries = false;
                                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Aggregate option in chart context menu', Ext.encode({
                                     timeseries: instance.timeseries
@@ -290,7 +293,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         disabled: isPie,
                         group: 'dataset_type' + randomNum,
                         listeners: {
-                            checkchange: function (/* t, check*/) {
+                            checkchange: function( /*t, check*/ ) {
                                 instance.timeseries = true;
                                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Timeseries option in chart context menu', Ext.encode({
                                     timeseries: instance.timeseries
@@ -329,8 +332,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         checked: allLogScale === true,
                         disabled: isPie,
                         listeners: {
-                            checkchange: function (t, check) {
-                                instance.datasetStore.each(function (record) {
+                            checkchange: function(t, check) {
+                                instance.datasetStore.each(function(record) {
                                     record.set('log_scale', check);
                                 });
                             }
@@ -341,7 +344,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.swap_xy,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.chartSwapXYField.setValue(check);
                             }
                         }
@@ -351,7 +354,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.share_y_axis,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.shareYAxisField.setValue(check);
                             }
                         }
@@ -361,7 +364,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.hide_tooltip,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.hideTooltipField.setValue(check);
                             }
                         }
@@ -371,7 +374,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.show_filters,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.chartShowSubtitleField.setValue(check);
                             }
                         }
@@ -382,26 +385,28 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.featured,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.featuredCheckbox.setValue(check);
                             }
                         }
                     }
                 ]
 
-            }); // menu
+            }); //menu
         }
 
-        if (newchart) {
+        if(newchart){
             instance.menuRefs.newChart = menu;
-        } else {
-            instance.menuRefs.chartOptions = menu;
+        }
+        else {
+          instance.menuRefs.chartOptions = menu;
         }
         menu.showAt(Ext.EventObject.getXY());
+
     },
     // ------------------------------------------------------------------
 
-    pointContextMenu: function (point, datasetId, instance) {
+    pointContextMenu: function(point, datasetId, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -409,14 +414,14 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         XDMoD.TrackEvent('Metric Explorer', 'Clicked on chart data point to access context menu', Ext.encode({
             'x-axis': point.ts ? Highcharts.dateFormat('%Y-%m-%d', point.ts) : point.series.data[point.x].category,
             'y-axis': point.y,
-            series: point.series.name
+            'series': point.series.name
         }));
 
         XDMoD.Module.MetricExplorer.seriesContextMenu(point.series, false, datasetId, point, instance);
     },
     // ------------------------------------------------------------------
 
-    seriesContextMenu: function (series, legendItemClick, datasetId, point, instance) {
+    seriesContextMenu: function(series, legendItemClick, datasetId, point, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -429,8 +434,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             return;
         }
         XDMoD.TrackEvent('Metric Explorer', 'Clicked on chart data series to access context menu', Ext.encode({
-            series: series ? series.name : datasetId,
-            legendItemClick: legendItemClick
+            'series': series ? series.name : datasetId,
+            'legendItemClick': legendItemClick
         }));
 
         var realm = record.get('realm'),
@@ -458,7 +463,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             var realms = [];
             for (var r in instance.realms) {
                 if (instance.realms.hasOwnProperty(r)) {
-                    var ds = instance.realms[r].dimensions;
+                    var ds = instance.realms[r]['dimensions'];
                     for (var dd in ds) {
                         if (dd == dimension) {
                             realms.push(r);
@@ -487,7 +492,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 value: CCR.xdmod.ui.AddDataPanel.sort_types[i][0],
                 checked: record.get('sort_type') === CCR.xdmod.ui.AddDataPanel.sort_types[i][0],
                 xtype: 'menucheckitem',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Sort option in data series context menu', Ext.encode({
                         datasetId: datasetId,
                         sort_type: this.value
@@ -497,7 +502,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             });
         }
 
-        var displayItems = instance.getDisplayTypeItems(record.get('display_type'), 'menucheckitem', 'display_types' + randomNum, function (b) {
+        var displayItems = instance.getDisplayTypeItems(record.get('display_type'), 'menucheckitem', 'display_types' + randomNum, function(b) {
             XDMoD.TrackEvent('Metric Explorer', 'Clicked on Display option in data series context menu', Ext.encode({
                 datasetId: record.id,
                 display_type: b.value
@@ -514,6 +519,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             var isValid = instance.validateChart([next]);
             if (isValid) {
                 record.set('display_type', next);
+
             }
         }, this, {
             timeseries: instance.timeseries,
@@ -528,7 +534,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 value: CCR.xdmod.ui.AddDataPanel.combine_types[q][0],
                 checked: record.get('combine_type') === CCR.xdmod.ui.AddDataPanel.combine_types[q][0],
                 xtype: 'menucheckitem',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Stacking option in data series context menu', Ext.encode({
                         datasetId: datasetId,
                         combine_type: this.value
@@ -538,9 +544,9 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             });
         }
 
-        record.store.each(function (r) {
+        record.store.each(function(r) {
             var z_index = r.get('z_index');
-            if (z_index === null || z_index === '' || z_index === undefined) {
+            if (z_index === null || z_index === "" || z_index === undefined) {
                 z_index = r.store.indexOf(record);
                 r.store.suspendEvents();
                 r.set('z_index', z_index);
@@ -551,7 +557,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             minZIndex,
             maxZIndex,
             z_index = record.get('z_index');
-        record.store.each(function (r) {
+        record.store.each(function(r) {
             if (r.id !== record.id) {
                 var z_index = r.get('z_index');
                 if (minZIndex === undefined || z_index < minZIndex) {
@@ -588,19 +594,20 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 value: XDMoD.Module.MetricExplorer.layer_types[g][0],
                 disabled: disabled,
                 xtype: 'menuitem',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
+
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Layer option in data series context menu', Ext.encode({
                         datasetId: datasetId,
                         combine_type: this.value
                     }));
 
-                    var process_value = function (value, record) {
+                    var process_value = function(value, record) {
                         var toZIndex;
                         switch (value) {
                             case 'send_backward':
                                 if (minZIndex !== undefined && z_index >= minZIndex) {
                                     var maxZIndexLessThanZIndex;
-                                    record.store.each(function (r) {
+                                    record.store.each(function(r) {
                                         var r_z_index = r.get('z_index');
                                         if ((maxZIndexLessThanZIndex === undefined || r_z_index > maxZIndexLessThanZIndex) && r_z_index < z_index) {
                                             maxZIndexLessThanZIndex = r_z_index;
@@ -614,7 +621,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                             case 'bring_forward':
                                 if (maxZIndex !== undefined && z_index <= maxZIndex) {
                                     var minZIndexGreaterThanZIndex;
-                                    record.store.each(function (r) {
+                                    record.store.each(function(r) {
                                         var r_z_index = r.get('z_index');
                                         if ((minZIndexGreaterThanZIndex === undefined || r_z_index < minZIndexGreaterThanZIndex) && r_z_index > z_index) {
                                             minZIndexGreaterThanZIndex = r_z_index;
@@ -660,7 +667,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 value: CCR.xdmod.ui.AddDataPanel.line_widths[y][0],
                 xtype: 'menucheckitem',
                 checked: record.get('line_width') === CCR.xdmod.ui.AddDataPanel.line_widths[y][0],
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Line Width option in data series context menu', Ext.encode({
                         datasetId: datasetId,
                         line_width: this.value
@@ -682,7 +689,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var colorItems = new Ext.menu.ColorMenu({
             activeItem: colorIndex > -1 ? colorIndex : undefined,
             colors: CCR.xdmod.ui.colors[0],
-            handler: function (cm, color) {
+            handler: function(cm, color) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Color option in data series context menu', Ext.encode({
                     datasetId: datasetId,
                     color: color
@@ -707,7 +714,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 value: CCR.xdmod.ui.AddDataPanel.line_types[z][0],
                 xtype: 'menucheckitem',
                 checked: record.get('line_type') === CCR.xdmod.ui.AddDataPanel.line_types[z][0],
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Line Type option in data series context menu', Ext.encode({
                         datasetId: datasetId,
                         line_type: this.value
@@ -718,7 +725,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             });
         }
 
-        var dimensions = instance.realms[realm].dimensions;
+        var dimensions = instance.realms[realm]['dimensions'];
         var drilldownItems = ['<span class="menu-title">' + (dimensions[dimension].text !== drillLabel ? (dimension !== 'none' ? 'For ' + dimensions[dimension].text + ' = ' + drillLabel + ', ' : '') : '') + 'Drilldown to:</span><br/>'];
 
         if (drillId && drillLabel) {
@@ -731,7 +738,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         dim: dim,
                         text: dimensions[dim].text,
                         iconCls: 'drill',
-                        handler: function (/* b*/) {
+                        handler: function( /*b*/ ) {
                             instance.fireEvent('disable_commit');
                             if (dimensions[dimension].text !== drillLabel && dimension !== 'none') {
                                 var filter = drillFilter,
@@ -762,7 +769,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             }
         }
         var metricItems = [];
-        var metrics = instance.realms[realm].metrics;
+        var metrics = instance.realms[realm]['metrics'];
         for (var met in metrics) {
             if (metrics.hasOwnProperty(met)) {
                 if (metric === met) {
@@ -772,7 +779,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     met: met,
                     text: metrics[met].text,
                     iconCls: 'chart',
-                    handler: function (/* b*/) {
+                    handler: function( /*b*/ ) {
                         record.set('metric', this.met);
                     }
                 });
@@ -788,7 +795,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     met: thisMet,
                     text: metrics[thisMet].text,
                     iconCls: 'chart',
-                    handler: function (/* b*/) {
+                    handler: function( /*b*/ ) {
+
                         var config = {},
                             defaultConfig = {
                                 id: Math.random(),
@@ -818,7 +826,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     dim: thisDim,
                     text: thisDim == 'none' ? 'None' : dimensions[thisDim].text,
                     iconCls: 'menu',
-                    handler: function (/* b*/) {
+                    handler: function( /*b*/ ) {
                         record.set('group_by', this.dim);
                     }
                 });
@@ -833,8 +841,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 '-'
             ],
             listeners: {
-                show: {
-                    fn: function (menu) {
+                'show': {
+                    fn: function(menu) {
                         menu.getEl().slideIn('t', {
                             easing: 'easeIn',
                             duration: 0.2
@@ -842,7 +850,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     }
                 }
             }
-        }); // menu
+        }); //menu
         if (series) {
             var visibility = Ext.apply({}, record.get('visibility')),
                 originalTitle = series.options.otitle;
@@ -859,7 +867,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 xtype: 'menucheckitem',
                 checked: visible,
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Hide Series option in data series context menu', Ext.encode({
                             checked: check
                         }));
@@ -878,6 +886,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
         if (drillId) {
             if (CCR.xdmod.ui.jobViewer && legendItemClick === false) {
+
                 var raw_data_allowed_realms = ['SUPREMM'];
 
                 var raw_data_disabled = true;
@@ -900,7 +909,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     iconCls: 'dataset',
                     disabled: raw_data_disabled,
                     tooltip: raw_data_tooltip,
-                    handler: function (/* b*/) {
+                    handler: function( /*b*/ ) {
                         var opts = {
                             format: 'jsonstore',
                             operation: 'get_rawdata',
@@ -913,7 +922,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         var parameters = {};
                         Ext.apply(parameters, store.baseParams);
                         Ext.apply(parameters, opts);
-                        if (dimension !== 'none') {
+                        if (dimension !== "none") {
                             var global_filters = JSON.parse(decodeURIComponent(parameters.global_filters));
 
                             // Always include the drillFilter which will be the filter that narrows down the
@@ -923,7 +932,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                             var filters = [drillFilter];
 
                             if (global_filters && CCR.isType(global_filters.data, CCR.Types.Array)) {
-                                for (var i = 0; i < global_filters.data.length; i++) {
+                                for ( var i = 0; i < global_filters.data.length; i++) {
                                     var global_filter = global_filters.data[i];
 
                                     // Make sure that we don't include any filters that filter on the same
@@ -936,7 +945,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                                     }
                                 }
                             }
-                            parameters.global_filters = encodeURIComponent(JSON.stringify({ data: filters }));
+                            parameters.global_filters = encodeURIComponent(JSON.stringify({data: filters}));
                         }
 
                         var rawDataStore = new Ext.data.JsonStore({
@@ -945,24 +954,24 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                                 method: 'POST',
                                 url: 'controllers/metric_explorer.php',
                                 listeners: {
-                                    load: function (o, options) {
+                                    load: function(o, options) {
                                         if (options.reader.jsonData && options.reader.jsonData.totalAvailable) {
-                                            var jobstr = function (njobs) {
-                                                return njobs + (njobs == 1 ? ' job ' : ' jobs ');
+                                            var jobstr = function(njobs) {
+                                                return njobs + (njobs == 1 ? " job " : " jobs ");
                                             };
 
-                                            var infomsg = jobstr(options.reader.jsonData.totalAvailable) + 'in the dataset.';
+                                            var infomsg = jobstr(options.reader.jsonData.totalAvailable) + "in the dataset.";
                                             if (options.reader.jsonData.totalCount != options.reader.jsonData.totalAvailable) {
                                                 if (options.reader.jsonData.totalCount == 0) {
-                                                    infomsg += ' You do not have permission to view these jobs.';
+                                                    infomsg += " You do not have permission to view these jobs.";
                                                 } else {
-                                                    infomsg += ' Showing the ' + jobstr(options.reader.jsonData.totalCount) + 'that you have permission to view.';
+                                                    infomsg += " Showing the " + jobstr(options.reader.jsonData.totalCount) + "that you have permission to view.";
                                                 }
                                             }
                                             var topbar = instance.rawdataWindow.getTopToolbar();
                                             topbar.removeAll();
                                             topbar.add({
-                                                xtype: 'label',
+                                                xtype: "label",
                                                 text: infomsg,
                                                 style: 'font-weight:bold;'
                                             });
@@ -977,14 +986,14 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                             root: 'data',
                             idProperty: 'jobid',
                             totalProperty: 'totalCount',
-                            fields: ['resource', 'name', 'local_job_id', 'jobid']
+                            fields: ["resource", "name", "local_job_id", "jobid"]
                         });
 
                         var rawDataGrid = new Ext.grid.GridPanel({
                             id: 'raw_data_grid',
                             region: 'center',
                             store: rawDataStore,
-                            autoExpandColumn: 'raw_data_username',
+                            autoExpandColumn: "raw_data_username",
                             loadMask: {
                                 msg: 'Loading...'
                             },
@@ -1010,7 +1019,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                                 }]
                             }),
                             listeners: {
-                                rowclick: function (grid, row_index /* , event*/) {
+                                rowclick: function(grid, row_index /*, event*/ ) {
                                     var record = grid.getStore().getAt(row_index);
 
                                     var title = instance &&
@@ -1022,7 +1031,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
                                     var info = {
                                         realm: realm,
-                                        text: record.get('resource') + '-' + record.get('local_job_id'),
+                                        text: record.get('resource') + "-" + record.get('local_job_id'),
                                         local_job_id: record.get('local_job_id'),
                                         job_id: record.get('jobid'),
                                         title: title
@@ -1042,7 +1051,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                                 emptyMsg: 'No jobs to display',
                                 store: rawDataStore,
                                 listeners: {
-                                    load: function (store, records, options) {
+                                    load: function(store, records, options) {
                                         this.onLoad(store, records, options);
                                     }
                                 }
@@ -1065,10 +1074,10 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                                 items: ['&nbsp;']
                             },
                             listeners: {
-                                show: function (/* window*/) {
+                                show: function( /*window*/ ) {
                                     instance.rawDataShowing = true;
                                 },
-                                close: function (/* window*/) {
+                                close: function( /*window*/ ) {
                                     instance.rawDataShowing = false;
                                 }
                             }
@@ -1097,16 +1106,17 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                     if (!found) {
                         quickFilterItems.push({
                             text: 'Dataset',
-                            handler: function (/* b*/) {
+                            handler: function( /*b*/ ) {
                                 filters.data.push(drillFilter);
                                 filters.total++;
                                 record.set('filters', filters);
+
                             }
                         });
                     }
                     quickFilterItems.push({
                         text: 'Chart',
-                        handler: function (/* b*/) {
+                        handler: function( /*b*/ ) {
                             instance.filtersStore.add(new instance.filtersStore.recordType(drillFilter));
                         }
                     });
@@ -1176,9 +1186,9 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
                 xtype: 'menucheckitem',
                 checked: record.get('std_err'),
-                disabled: !instance.realms[record.data.realm].metrics[metric].std_err || record.get('log_scale'),
+                disabled: !instance.realms[record.data.realm]['metrics'][metric].std_err || record.get('log_scale'),
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Std Err Bars option in data series context menu');
                         record.set('std_err', check);
                     }
@@ -1188,9 +1198,9 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
                 xtype: 'menucheckitem',
                 checked: record.get('std_err_labels'),
-                disabled: !instance.realms[record.data.realm].metrics[metric].std_err || record.get('log_scale'),
+                disabled: !instance.realms[record.data.realm]['metrics'][metric].std_err || record.get('log_scale'),
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Std Err Labels option in data series context menu');
                         record.set('std_err_labels', check);
                     }
@@ -1203,7 +1213,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 checked: record.get('log_scale'),
                 disabled: isPie,
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Log Scale option in data series context menu');
                         record.set('log_scale', check);
                     }
@@ -1215,7 +1225,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 xtype: 'menucheckitem',
                 checked: record.get('value_labels'),
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Value Labels option in data series context menu');
                         record.set('value_labels', check);
                     }
@@ -1227,7 +1237,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 xtype: 'menucheckitem',
                 checked: record.get('long_legend'),
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Verbose Legend option in data series context menu');
                         record.set('long_legend', check);
                     }
@@ -1239,7 +1249,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 xtype: 'menucheckitem',
                 checked: record.get('shadow'),
                 listeners: {
-                    checkchange: function (t, check) {
+                    checkchange: function(t, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Shadow option in data series context menu');
                         record.set('shadow', check);
                     }
@@ -1260,7 +1270,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             text: 'Edit Dataset',
             iconCls: 'edit_data',
 
-            handler: function (/* b*/) {
+            handler: function( /*b*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Edit Dataset option in data series context menu');
                 instance.editDataset(datasetId);
             }
@@ -1275,7 +1285,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 checked: legendValue == XDMoD.Module.MetricExplorer.legend_types[j][0],
                 xtype: 'menucheckitem',
                 group: 'legend_type' + randomNum,
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     instance.legendTypeComboBox.setValue(this.value);
                     XDMoD.TrackEvent('Metric Explorer', 'Updated legend placement', Ext.encode({
                         legend_type: this.value
@@ -1288,7 +1298,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         }
         if (series) {
             var originalTitle = series.options.otitle;
-            var resetLegendItemTitle = function () {
+            var resetLegendItemTitle = function() {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on reset legend item name option in series context menu');
 
                 delete instance.legend[originalTitle];
@@ -1308,18 +1318,18 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             menu.addItem({
                 text: 'Edit Legend Item',
                 iconCls: 'edit_legend_item',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on edit legend item option in series context menu');
                     var menu = instance.getTextEditMenu(
                         series.name,
                         'Legend Item',
-                        function (text) {
+                        function(text) {
                             if (text !== series.name) {
                                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in legend item edit field.', Ext.encode({
                                     title: text
                                 }));
 
-                                // find old mapping, if one.
+                                //find old mapping, if one.
                                 if (instance.legend[originalTitle]) {
                                     instance.legend[originalTitle].title = text;
                                 } else {
@@ -1338,13 +1348,14 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         }, originalTitle !== series.options.name ? {
                             xtype: 'button',
                             text: 'Reset',
-                            handler: function () {
+                            handler: function() {
                                 resetLegendItemTitle.call(this);
                                 menu.hide();
                             }
                         } : null
                     );
                     menu.showAt(Ext.EventObject.getXY());
+
                 }
             });
             if (originalTitle !== series.options.name) {
@@ -1360,14 +1371,15 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             text: 'Delete Dataset',
             iconCls: 'delete_data',
 
-            handler: function (/* b*/) {
+            handler: function( /*b*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Delete Dataset option in data series context menu');
                 instance.removeDataset(datasetId);
             }
         });
         menu.showAt(Ext.EventObject.getXY());
-    }, // seriesCo362ntextMenu
-    titleContextMenu: function (event, instance) {
+
+    }, //seriesCo362ntextMenu
+    titleContextMenu: function(event, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1375,7 +1387,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var menu = instance.getTextEditMenu(
             textContent,
             'Chart Title',
-            function (text) {
+            function(text) {
                 if (text !== textContent) {
                     XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in chart title edit field.', Ext.encode({
                         title: text
@@ -1397,7 +1409,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         );
         menu.showAt(Ext.EventObject.getXY());
     },
-    subtitleContextMenu: function (event, instance) {
+    subtitleContextMenu: function(event, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1407,8 +1419,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 showSeparator: false,
                 ignoreParentClicks: true,
                 listeners: {
-                    show: {
-                        fn: function (menu) {
+                    'show': {
+                        fn: function(menu) {
                             menu.getEl().slideIn('t', {
                                 easing: 'easeIn',
                                 duration: 0.2
@@ -1424,16 +1436,16 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                         xtype: 'menucheckitem',
                         checked: instance.show_filters,
                         listeners: {
-                            checkchange: function (t, check) {
+                            checkchange: function(t, check) {
                                 instance.chartShowSubtitleField.setValue(check);
                             }
                         }
                     }
                 ]
-            }); // menu
+            }); //menu
         menu.showAt(Ext.EventObject.getXY());
     },
-    xAxisContextMenu: function (axis, instance) {
+    xAxisContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1445,18 +1457,19 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             startDate = durationSelector.getStartDate(),
             endDate = durationSelector.getEndDate(),
             menuItems = ['<span class="menu-title">X Axis [' + (axisIndex + 1) + ']</span><br/>'];
-        if (instance.timeseries) { // /date controls
+        if (instance.timeseries) { ///date controls
+
             var startDateMenu = new Ext.menu.DateMenu({
                 value: startDate,
                 maxDate: endDate,
-                handler: function (dp, date) {
+                handler: function(dp, date) {
                     durationSelector.setValues(date.format('Y-m-d'), endDate.format('Y-m-d'), null, null, true);
                 }
             });
             var endDateMenu = new Ext.menu.DateMenu({
                 value: endDate,
                 minDate: startDate,
-                handler: function (dp, date) {
+                handler: function(dp, date) {
                     durationSelector.setValues(startDate.format('Y-m-d'), date.format('Y-m-d'), null, null, true);
                 }
             });
@@ -1490,8 +1503,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             ignoreParentClicks: true,
             items: menuItems,
             listeners: {
-                show: {
-                    fn: function (menu) {
+                'show': {
+                    fn: function(menu) {
                         menu.getEl().slideIn('t', {
                             easing: 'easeIn',
                             duration: 0.2
@@ -1506,12 +1519,12 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             menu.addItem({
                 text: 'Edit Title',
                 iconCls: 'edit_title',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Edit Title option in x axis context menu');
                     var menu = instance.getTextEditMenu(
                         '',
                         'X Axis [' + (axisIndex + 1) + '] Title',
-                        function (text) {
+                        function(text) {
                             if (text !== originalTitle) {
                                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in x axis title edit field.', Ext.encode({
                                     title: text
@@ -1530,7 +1543,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             menu.addItem({
                 text: 'Reset Title',
                 iconCls: 'reset_title',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Reset Title option in x axis context menu');
                     instance.resetXAxisTitle(axis);
                 }
@@ -1538,13 +1551,13 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         }
         menu.showAt(Ext.EventObject.getXY());
     },
-    xAxisLabelContextMenu: function (axis, instance) {
+    xAxisLabelContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
         XDMoD.Module.MetricExplorer.xAxisContextMenu(axis, instance);
     },
-    xAxisTitleContextMenu: function (axis, instance) {
+    xAxisTitleContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1554,7 +1567,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var menu = instance.getTextEditMenu(
             axisTitle,
             'X Axis [' + (axisIndex + 1) + '] Title',
-            function (text) {
+            function(text) {
                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in x axis [' + (axisIndex + 1) + '] title field.', Ext.encode({
                     title: text
                 }));
@@ -1566,7 +1579,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             axisTitle !== originalTitle ? {
                 text: 'Reset',
                 xtype: 'button',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Reset Title option in x axis context menu');
                     instance.resetXAxisTitle(axis);
                     menu.hide();
@@ -1576,7 +1589,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
         menu.showAt(Ext.EventObject.getXY());
     },
-    yAxisTitleContextMenu: function (axis, instance) {
+    yAxisTitleContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1586,7 +1599,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var menu = instance.getTextEditMenu(
             axisTitle,
             'Y Axis [' + (axisIndex + 1) + '] Title',
-            function (text) {
+            function(text) {
                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in y axis [' + (axisIndex + 1) + '] title field.', Ext.encode({
                     title: text
                 }));
@@ -1596,7 +1609,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             axisTitle !== originalTitle ? {
                 text: 'Reset',
                 xtype: 'button',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Reset Title option in y axis context menu');
                     instance.resetYAxisTitle(axis);
                     menu.hide();
@@ -1607,7 +1620,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         menu.showAt(Ext.EventObject.getXY());
     },
 
-    yAxisContextMenu: function (axis, instance) {
+    yAxisContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1619,12 +1632,12 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var minField = new Ext.form.NumberField({
             value: axis.options.min,
             listeners: {
-                specialkey: function (field, e) {
+                specialkey: function(field, e) {
                     if (e.getKey() == e.ENTER) {
                         handler();
                     }
                 },
-                afterrender: function (field) {
+                afterrender: function(field) {
                     field.focus(true, 700);
                 }
             }
@@ -1632,7 +1645,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         var maxField = new Ext.form.NumberField({
             value: axis.options.max,
             listeners: {
-                specialkey: function (field, e) {
+                specialkey: function(field, e) {
                     if (e.getKey() == e.ENTER) {
                         handler();
                     }
@@ -1649,7 +1662,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
         }
 
         var allLogScale;
-        instance.datasetStore.each(function (record) {
+        instance.datasetStore.each(function(record) {
             for (var i = 0; i < yAxisDatasetIds.length; i++) {
                 if (Math.abs(yAxisDatasetIds[i] - record.data.id) < 1e-14) {
                     allLogScale = (allLogScale === undefined || allLogScale === true) && record.get('log_scale');
@@ -1664,12 +1677,12 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             iconCls: 'log_scale',
             xtype: 'checkbox',
             listeners: {
-                specialkey: function (field, e) {
+                specialkey: function(field, e) {
                     if (e.getKey() == e.ENTER) {
                         handler();
                     }
                 },
-                check: function (t, ch) {
+                check: function(t, ch) {
                     t.setValue(ch);
                 }
             }
@@ -1688,16 +1701,16 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 setLog // log scaling checkbox
             ],
             listeners: {
-                show: {
-                    fn: function (menu) {
+                'show': {
+                    fn: function(menu) {
                         menu.getEl().slideIn('t', {
                             easing: 'easeIn',
                             duration: 0.2
                         });
                     }
                 },
-                hide: {
-                    fn: function (menu) {
+                'hide': {
+                    fn: function(menu) {
                         menu.destroy();
                     }
                 }
@@ -1719,7 +1732,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             return result;
         }
 
-        handler = function () {
+        handler = function() {
             var oldMin = axis.min,
                 oldMax = axis.max,
                 allLog = setLog.getValue(),
@@ -1731,7 +1744,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             instance.fireEvent('disable_commit');
 
             // Set log_scale to the value of allLog
-            instance.datasetStore.each(function (record) {
+            instance.datasetStore.each(function(record) {
                 for (var i = 0; i < yAxisDatasetIds.length; i++) {
                     if (Math.abs(yAxisDatasetIds[i] - record.data.id) < 1e-14) {
                         record.set('log_scale', allLog);
@@ -1741,6 +1754,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
 
             // Calculate best min and max for log plot
             if (allLog) {
+
                 axisType = 'logarithmic';
 
                 /* This is only pre-defined until we decide to either
@@ -1753,29 +1767,32 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
                 newMax = calcMax(defaultBase, newMax);
 
                 /* Do not permit minimum <= 0 */
-                if (newMin == '' || newMin <= 0) {
+                if (newMin == "" || newMin <= 0) {
                     newMin = null;
                 }
+
             } else {
+
                 axisType = 'linear';
 
-                if (newMin == '') {
+                if (newMin == "") {
                     newMin = 0;
                 }
             } // if (allLog)
 
-            if (newMax == '') {
+            if (newMax == "") {
                 newMax = null;
             }
 
             if ((newMin == null || newMax == null) ||
                 (newMax > newMin && (newMin !== oldMin || newMax !== oldMax))) {
+
                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in y axis [' + (axisIndex + 1) + '] min/max field.', Ext.encode({
                     min: newMin,
                     max: newMax
                 }));
 
-                // find a config mapping, if one.
+                //find a config mapping, if one.
                 if (instance.yAxis['original' + axisIndex]) {
                     instance.yAxis['original' + axisIndex].min = newMin;
                     instance.yAxis['original' + axisIndex].max = newMax;
@@ -1810,12 +1827,12 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             menu.addItem({
                 text: 'Edit Title',
                 iconCls: 'edit_title',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Edit Title option in y axis context menu');
                     var menu = instance.getTextEditMenu(
                         '',
                         'Y Axis [' + (axisIndex + 1) + '] Title',
-                        function (text) {
+                        function(text) {
                             if (text !== originalTitle) {
                                 XDMoD.TrackEvent('Metric Explorer', 'Pressed enter in y axis title edit field.', Ext.encode({
                                     title: text
@@ -1834,7 +1851,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             menu.addItem({
                 text: 'Reset Title',
                 iconCls: 'reset_title',
-                handler: function (/* b*/) {
+                handler: function( /*b*/ ) {
                     XDMoD.TrackEvent('Metric Explorer', 'Clicked on Reset Title option in y axis context menu');
                     instance.resetYAxisTitle(axis);
                 }
@@ -1852,13 +1869,13 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
             items: [{
                 xtype: 'button',
                 text: 'Ok',
-                handler: function () {
+                handler: function() {
                     handler.call(this);
                 }
             }, {
                 xtype: 'button',
                 text: 'Cancel',
-                handler: function () {
+                handler: function() {
                     menu.destroy();
                 }
             }]
@@ -1874,7 +1891,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
              *                            execution is not filtered.
              * @return {dependent}        return type of handler
              */
-            menu.keyNav.doRelay = function (event, handler) {
+            menu.keyNav.doRelay = function(event, handler) {
+
                 var key = event.getKey();
 
                 if (!this.menu.activeItem && event.isNavKeyPress()) {
@@ -1894,7 +1912,7 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
              * @return {Boolean} always returns true since we just want
              * allow the arrow keys to perform their normal function.
              */
-            menu.keyNav.left = function (/* event, menu*/) {
+            menu.keyNav.left = function( /*event, menu*/ ) {
                 return true;
             };
 
@@ -1907,12 +1925,13 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
              * @return {Boolean} always returns true since we just want
              * allow the arrow keys to perform their normal function.
              */
-            menu.keyNav.right = function (/* event, menu*/) {
+            menu.keyNav.right = function( /*event, menu*/ ) {
                 return true;
             };
         }
+
     },
-    yAxisLabelContextMenu: function (axis, instance) {
+    yAxisLabelContextMenu: function(axis, instance) {
         if (instance === undefined) {
             instance = CCR.xdmod.ui.metricExplorer;
         }
@@ -1974,8 +1993,8 @@ Ext.apply(XDMoD.Module.MetricExplorer, {
      */
     resetDimensionRealmMapping: function () {
         XDMoD.Module.MetricExplorer.dimensionsToRealms = {};
-    }
-}); // Ext.apply(XDMoD.Module.MetricExplorer
+    },
+}); //Ext.apply(XDMoD.Module.MetricExplorer
 
 // ===========================================================================
 
@@ -2013,22 +2032,25 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
     // ------------------------------------------------------------------
 
-    getDataSeries: function () {
+    getDataSeries: function() {
+
         var data = [];
 
-        this.datasetStore.each(function (record) {
+        this.datasetStore.each(function(record) {
             data.push(record.data);
         });
 
         return data;
-    }, // getDataSeries
+
+    }, //getDataSeries
 
     // ------------------------------------------------------------------
 
-    getGlobalFilters: function () {
+    getGlobalFilters: function() {
+
         var ret = [];
 
-        this.filtersStore.each(function (record) {
+        this.filtersStore.each(function(record) {
             ret.push(record.data);
         });
 
@@ -2036,11 +2058,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             data: ret,
             total: ret.length
         };
-    }, // getGlobalFilters
+
+    }, //getGlobalFilters
 
     // ------------------------------------------------------------------
 
-    getConfig: function () {
+    getConfig: function() {
+
         var dataSeries = this.getDataSeries();
         var dataSeriesCount = dataSeries.length;
         var title = this.chartTitleField.getValue();
@@ -2076,17 +2100,19 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             start: this.show_remainder ? 0 : this.chartPagingToolbar.cursor,
             limit: this.chartPagingToolbar.pageSize
 
-        }; // config
+        }; //config
 
         return config;
-    }, // getConfig
 
-    filterStoreLoad: function () {
+    }, //getConfig
+
+    filterStoreLoad: function() {
         this.saveQuery();
     },
     // ------------------------------------------------------------------
 
-    reset: function (preserveFilters) {
+    reset: function(preserveFilters) {
+
         this.disableSave = true;
         this.timeseries = true;
         this.xAxis = {};
@@ -2099,7 +2125,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         this.chartOptionsButton.setTooltip('');
         this.chartNameTextbox.setValue(null);
 
-        // perhaps these should be saved to the user profile separately
+        //perhaps these should be saved to the user profile separately
         this.setLegendValue('bottom_center', false);
         this.fontSizeSlider.setValue(3);
         this.featuredCheckbox.setValue(false);
@@ -2112,19 +2138,19 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         }
 
         this.disableSave = false;
-    }, // reset
+    }, //reset
 
     // ------------------------------------------------------------------
 
-    createQueryFunc: function (b, em, queryName, config, preserveFilters, initialConfig, insert) {
+    createQueryFunc: function(b, em, queryName, config, preserveFilters, initialConfig, insert) {
         insert = CCR.exists(insert) ? insert : true;
         var instance = CCR.xdmod.ui.metricExplorer || this;
 
         var sm = this.queriesGridPanel.getSelectionModel();
         sm.clearSelections();
 
-        var findQueriesStoreIndexByName = function (name) {
-            return this.queriesStore.findBy(function (record) {
+        var findQueriesStoreIndexByName = function(name) {
+            return this.queriesStore.findBy(function(record) {
                 if (record.get('name') === name) {
                     return true;
                 }
@@ -2145,6 +2171,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         }
 
         if (!config) {
+
             config = this.getConfig();
             if (initialConfig) {
                 Ext.apply(config, initialConfig);
@@ -2156,7 +2183,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             index = findQueriesStoreIndexByName.call(this, queryName);
         }
 
-        var selectRowByIndex = function (index, silent) {
+        var selectRowByIndex = function(index, silent) {
             silent = Ext.isDefined(silent) ? silent : true;
 
             if (silent) {
@@ -2188,7 +2215,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             r.stack = new XDMoD.ChangeStack({
                 listeners: {
-                    update: function (changeStack, record, action) {
+                    'update': function(changeStack, record, action) {
                         instance.handleChartModification(changeStack, record, action);
                     }
                 }
@@ -2206,22 +2233,24 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             }
 
             instance.currentQueryRecord = r;
+
         }
 
         this.chartNameTextbox.setValue(queryName);
         this.chartOptionsButton.setText(truncateText(queryName, XDMoD.Module.MetricExplorer.CHART_OPTIONS_MAX_TEXT_LENGTH));
         this.chartOptionsButton.setTooltip(queryName);
-    }, // createQueryFunc
+    }, //createQueryFunc
 
     // ------------------------------------------------------------------
 
-    saveQueryFunc: function (commitChanges) {
+    saveQueryFunc: function(commitChanges) {
+
         commitChanges = commitChanges || false;
 
         var config = this.getConfig();
         var rec = this.getCurrentRecord();
 
-        if (config.featured === JSON.parse(this.currentQueryRecord.data.config).featured &&
+      if (config.featured === JSON.parse(this.currentQueryRecord.data.config).featured &&
           !this.currentQueryRecord.stack.isMarked()) {
             this.summaryDirty = true;
         }
@@ -2230,7 +2259,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         if (rec.get('config') != Ext.util.JSON.encode(config)) {
             var newConfig = Ext.util.JSON.decode(rec.get('config'));
-            Ext.apply(newConfig, config); // apply the new setting onto the old one so that any hidden properties can be preserved.
+            Ext.apply(newConfig, config); //apply the new setting onto the old one so that any hidden properties can be preserved.
 
             var valid = this.validateChartType(newConfig);
             if (!valid) {
@@ -2264,28 +2293,28 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         }
 
         return recordUpdated;
-    }, // saveQueryFunc
+    }, //saveQueryFunc
 
     // ------------------------------------------------------------------
 
-    loadQuery: function (config, reload) {
+    loadQuery: function(config, reload) {
+
         if (!config) {
             return;
         }
 
         this.disableSave = true;
 
-        var selectedIndex = /* CCR.exists(this.selectedIndex) ? this.selectedIndex : 0*/ 0; // This always seems to be 0??
+        var selectedIndex = /*CCR.exists(this.selectedIndex) ? this.selectedIndex : 0*/ 0; // This always seems to be 0??
 
         this.getDurationSelector().setValues(config.start_date, config.end_date, config.aggregation_unit, config.timeframe_label);
 
-        this.timeseries = Boolean(config.timeseries);
+        this.timeseries = config.timeseries ? true : false;
 
         var dataSeriesIsObject = CCR.isType(config.data_series, CCR.Types.Object);
         var dataSeriesIsArray = CCR.isType(config.data_series, CCR.Types.Array);
         var trendLineValue = false;
-        var data,
-            record;
+        var data, record;
         if (dataSeriesIsObject) {
             data = config.data_series.data;
             record = CCR.exists(data) ? data[selectedIndex] : null;
@@ -2313,7 +2342,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         this._simpleSilentSetValue(this.chartShowSubtitleField, config.show_filters);
         this._simpleSilentSetValue(this.featuredCheckbox, config.featured);
 
-        this._noEvents(this.datasetTypeRadioGroup.items.items, function (component, timeseries) {
+        this._noEvents(this.datasetTypeRadioGroup.items.items, function(component, timeseries) {
             var value = timeseries ? 'timeseries_cb' : 'aggregate_cb';
             component.setValue(value, true);
         }, this.datasetTypeRadioGroup, this.timeseries);
@@ -2356,9 +2385,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         if (reload) {
             this.reloadChart.call(this);
         }
-    }, // loadQuery
+    }, //loadQuery
 
-    mask: function (message) {
+    mask: function(message) {
         var viewer = CCR.xdmod.ui.Viewer.getViewer();
 
         if (!viewer.el) {
@@ -2368,7 +2397,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         viewer.el.mask(message);
     },
 
-    unmask: function () {
+    unmask: function() {
         var viewer = CCR.xdmod.ui.Viewer.getViewer();
 
         if (!viewer.el) {
@@ -2385,18 +2414,18 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         viewer.el.unmask();
     },
 
-    resetXAxisTitle: function (axis) {
+    resetXAxisTitle: function(axis) {
         var originalTitle = axis.options && axis.options.otitle ? axis.options.otitle : '';
         var defaultTitle = axis.options && axis.options.dtitle ? axis.options.dtitle : '';
 
         var newTitle = originalTitle === defaultTitle ? '' : originalTitle;
         this.setXAxisTitle(axis, newTitle);
     },
-    setXAxisTitle: function (axis, newTitle) {
+    setXAxisTitle: function(axis, newTitle) {
         var axisIndex = axis.options.index;
         var originalTitle = axis.options && axis.options.otitle ? axis.options.otitle : '';
 
-        // find old mapping, if one.
+        //find old mapping, if one.
         if (this.xAxis[originalTitle]) {
             this.xAxis[originalTitle].title = newTitle;
         } else {
@@ -2411,17 +2440,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         this.saveQuery();
     },
-    resetYAxisTitle: function (axis) {
+    resetYAxisTitle: function(axis) {
         var originalTitle = axis.options && axis.options.otitle ? axis.options.otitle : '';
         var defaultTitle = axis.options && axis.options.dtitle ? axis.options.dtitle : '';
 
         var newTitle = originalTitle === defaultTitle ? '' : originalTitle;
         this.setYAxisTitle(axis, newTitle);
     },
-    setYAxisTitle: function (axis, newTitle) {
+    setYAxisTitle: function(axis, newTitle) {
         var axisIndex = axis.options.index;
 
-        // find old mapping, if one.
+        //find old mapping, if one.
         if (this.yAxis['original' + axisIndex]) {
             this.yAxis['original' + axisIndex].title = newTitle;
         } else {
@@ -2435,18 +2464,18 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         this.saveQuery();
     },
-    getTextEditMenu: function (textContent, label, handler, resetButton) {
+    getTextEditMenu: function(textContent, label, handler, resetButton) {
         var field = new Ext.form.TextField({
             value: Ext.util.Format.htmlDecode(textContent),
             width: 200,
             listeners: {
-                specialkey: function (field, e) {
+                specialkey: function(field, e) {
                     if (e.getKey() == e.ENTER) {
                         var text = Ext.util.Format.htmlEncode(field.getValue());
                         handler.call(this, text);
                     }
                 },
-                afterrender: function (field) {
+                afterrender: function(field) {
                     field.focus(true, 700);
                 }
             }
@@ -2460,14 +2489,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         buttons.push({
             xtype: 'button',
             text: 'Ok',
-            handler: function () {
+            handler: function() {
                 handler.call(this, Ext.util.Format.htmlEncode(field.getValue()));
             }
         });
         buttons.push({
             xtype: 'button',
             text: 'Cancel',
-            handler: function () {
+            handler: function() {
                 menu.hide();
             }
         });
@@ -2492,8 +2521,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 }
             ],
             listeners: {
-                show: {
-                    fn: function (menu) {
+                'show': {
+                    fn: function(menu) {
                         if (menu.keyNav) {
                             menu.keyNav.disable();
                         }
@@ -2507,7 +2536,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         });
         return menu;
     },
-    getDisplayTypeItems: function (displayType, xtype, group, handler, scope, extraConfig) {
+    getDisplayTypeItems: function(displayType, xtype, group, handler, scope, extraConfig) {
         var displayItems = [];
         for (var i = 0; CCR.xdmod.ui.AddDataPanel.display_types.length > i; i++) {
             var isNew = CCR.exists(extraConfig) && CCR.exists(extraConfig.newChart) && extraConfig.newChart;
@@ -2520,9 +2549,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 text: '<img class="x-panel-inline-icon ' + CCR.xdmod.ui.AddDataPanel.display_types[i][0] + '" src="gui/lib/extjs/resources/images/default/s.gif" alt=""> ' + CCR.xdmod.ui.AddDataPanel.display_types[i][1],
                 value: CCR.xdmod.ui.AddDataPanel.display_types[i][0],
                 checked: displayType === CCR.xdmod.ui.AddDataPanel.display_types[i][0],
-                xtype: xtype || 'menucheckitem',
+                xtype: xtype ? xtype : 'menucheckitem',
                 scope: scope,
-                handler: function (b) {
+                handler: function(b) {
                     handler.call(scope, b);
                 }
             };
@@ -2535,7 +2564,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return displayItems;
     },
     // ------------------------------------------------------------------
-    initComponent: function () {
+    initComponent: function() {
+
         var self = this;
 
         var chartScale = 1;
@@ -2546,40 +2576,40 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         /*
          * Start Legend Menu
          */
-        this.legendMenu = [];
-        this.setLegendValue = function (value, save) {
-            self.legendTypeComboBox.setValue(value);
-            var menuLen = self.legendMenu.length,
-                thisLegendItem;
-            while (menuLen--) {
-                thisLegendItem = self.legendMenu[menuLen];
-                if (thisLegendItem.value === value) {
-                    thisLegendItem.checked = true;
-                }
-                if (thisLegendItem.value !== value) {
-                    thisLegendItem.checked = false;
-                }
-            }
-            if (save) {
+         this.legendMenu = [];
+         this.setLegendValue = function(value, save){
+             self.legendTypeComboBox.setValue(value);
+             var menuLen = self.legendMenu.length,
+                 thisLegendItem;
+             while(menuLen--) {
+                 thisLegendItem = self.legendMenu[menuLen];
+                 if(thisLegendItem.value === value){
+                     thisLegendItem.checked = true;
+                 }
+                 if(thisLegendItem.value !== value){
+                     thisLegendItem.checked = false;
+                 }
+             }
+             if(save){
                 XDMoD.TrackEvent('Metric Explorer', 'Updated legend placement', Ext.encode({
                     legend_type: value
                 }));
                 this.saveQuery();
-            }
-        };
+             }
+         };
 
-        var legendLength = XDMoD.Module.MetricExplorer.legend_types.length,
-            legendHandler = function (/* thisMenuItem, event*/) {
+         var legendLength = XDMoD.Module.MetricExplorer.legend_types.length,
+            legendHandler = function(/*thisMenuItem, event*/){
                 self.setLegendValue(this.value, true);
             },
             thisLegendValue,
             thisLegendText,
             thisLegendId;
 
-        for (var i = 0; i < legendLength; i++) {
+        for(var i = 0; i < legendLength; i++){
             thisLegendValue = XDMoD.Module.MetricExplorer.legend_types[i][0];
             thisLegendText = XDMoD.Module.MetricExplorer.legend_types[i][1];
-            thisLegendId = thisLegendText.toLowerCase().replace(/ /g, '-');
+            thisLegendId = thisLegendText.toLowerCase().replace(/ /g,'-');
             this.legendMenu.push({
                 xtype: 'menucheckitem',
                 group: 'legend_type',
@@ -2597,9 +2627,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         this.realms = [];
         this.menuRefs = {
-            chartOptions: null,
-            newChart: null,
-            dataSeries: null
+          chartOptions: null,
+          newChart: null,
+          dataSeries: null
         };
         this.metricsMenu = new Ext.menu.Menu({
             id: 'metric-explorer-chartoptions-add-data-menu',
@@ -2614,14 +2644,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             items: ['<span class="menu-title">Add Filter:</span><br/>', '-'],
             listeners: {
                 scope: this,
-                afterrender: function (thisMenu) {
+                afterrender: function(thisMenu) {
                     thisMenu.tip = new Ext.ToolTip({
-                        target: thisMenu.getEl().getAttribute('id'),
-                        delegate: '.x-menu-item',
+                        target: thisMenu.getEl().getAttribute("id"),
+                        delegate: ".x-menu-item",
                         trackMouse: true,
                         renderTo: document.body,
-                        text: 'text',
-                        title: 'title',
+                        text: "text",
+                        title: "title",
                         listeners: {
                             beforeshow: function updateTip(tip) {
                                 var menuItem = thisMenu.findById(tip.triggerElement.id);
@@ -2629,7 +2659,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                     return false;
                                 }
 
-                                tip.header.dom.firstChild.innerHTML = 'Categories';
+                                tip.header.dom.firstChild.innerHTML = "Categories";
                                 tip.body.dom.innerHTML = menuItem.initialConfig.categories;
                             }
                         }
@@ -2654,16 +2684,19 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
 
             baseParams: {
-                operation: 'get_dw_descripter'
+                'operation': 'get_dw_descripter'
             }
 
-        }); // dwDescriptionStore
+        }); //dwDescriptionStore
 
-        this.dwDescriptionStore.on('beforeload', function () {
+        this.dwDescriptionStore.on('beforeload', function() {
+
             this.mask('Loading...');
+
         }, this);
 
-        this.dwDescriptionStore.on('load', function (store) {
+        this.dwDescriptionStore.on('load', function(store) {
+
             var filterItems = [];
             var filterMap = {};
 
@@ -2680,6 +2713,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             this.filtersMenu.add('<span class="menu-title">Add Filter:</span><br/>');
             this.filtersMenu.add('-');
             if (store.getCount() > 0) {
+
                 this.realms = store.getAt(0).get('realms');
 
                 var dataCatalogRoot = this.dataCatalogTree.getRootNode();
@@ -2690,9 +2724,10 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 var categoryMetricMenuItems = {};
                 for (var realm in this.realms) {
                     if (this.realms.hasOwnProperty(realm)) {
+
                         var category = this.realms[realm].category;
-                        var realm_metrics = this.realms[realm].metrics;
-                        var realm_dimensions = this.realms[realm].dimensions;
+                        var realm_metrics = this.realms[realm]['metrics'];
+                        var realm_dimensions = this.realms[realm]['dimensions'];
 
                         XDMoD.Module.MetricExplorer.setCategoryForRealm(realm, category);
 
@@ -2739,14 +2774,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                     listeners: {
                                         click: {
                                             scope: this,
-                                            fn: function (n) {
+                                            fn: function(n) {
                                                 var menu = new Ext.menu.Menu({
                                                     scope: this,
                                                     showSeparator: false,
                                                     ignoreParentClicks: true,
                                                     listeners: {
-                                                        show: {
-                                                            fn: function (menu) {
+                                                        'show': {
+                                                            fn: function(menu) {
                                                                 menu.getEl().slideIn('t', {
                                                                     easing: 'easeIn',
                                                                     duration: 0.25
@@ -2772,7 +2807,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                                             iconCls: 'menu',
                                                             config: config,
                                                             scope: this,
-                                                            handler: function (t) {
+                                                            handler: function(t) {
                                                                 t.config.display_type = self.defaultMetricDisplayType;
                                                                 var record = CCR.xdmod.ui.AddDataPanel.initRecord(t.scope.datasetStore, t.config, null, this.timeseries);
                                                                 var displayTypes = [record.get('display_type')];
@@ -2802,7 +2837,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                     realm: realm,
                                     metric: rm,
                                     scope: this,
-                                    handler: function (b /* , e*/) {
+                                    handler: function(b /*, e*/ ) {
                                         XDMoD.TrackEvent('Metric Explorer', 'Selected a metric from the Add Data menu', Ext.encode({
                                             realm: b.realm,
                                             metric: b.text
@@ -2811,7 +2846,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                     }
                                 }); // categoryMetricMenuItem.push
                             }
-                        } // for(rm in realm_metrics)
+                        } //for(rm in realm_metrics)
 
                         // Construct the list of filters for user selection:
                         for (var rdFilter in realm_dimensions) {
@@ -2828,6 +2863,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                                 // Define one element in the filterMap for each filter name:
                                 if (filterMap[rdFilter] === undefined) {
+
                                     // assign the filter's index in the filterMap
                                     filterMap[rdFilter] = filterItems.length;
 
@@ -2840,7 +2876,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                         dimension: rdFilter,
                                         scope: this,
                                         disabled: false,
-                                        handler: function (b /* , e*/) {
+                                        handler: function(b /*, e*/ ) {
                                             XDMoD.TrackEvent('Metric Explorer', 'Selected a filter from the Create Filter menu', b.text);
 
                                             // Limit the results to the realms which
@@ -2848,9 +2884,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                             // list of realms will get results for all
                                             // realms a filter applies to.)
                                             var applicableRealms = [];
-                                            Ext.each(b.realms, function (realm) {
-                                                self.datasetStore.each(function (dataset) {
-                                                    if (dataset.get('realm') !== realm) {
+                                            Ext.each(b.realms, function(realm) {
+                                                self.datasetStore.each(function(dataset) {
+                                                    if (dataset.get("realm") !== realm) {
                                                         return;
                                                     }
 
@@ -2862,6 +2898,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                             filterButtonHandler.call(b.scope, b.scope.filtersGridPanel.toolbars[0].el, b.dimension, b.text, applicableRealms);
                                         }
                                     }); // filterItems.push
+
                                 } else {
                                     // Pick up the realm categories and names for multi-realm filters.
                                     // Ensure we have all the applicable realms listed for each filter.
@@ -2873,11 +2910,11 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                     }
                                 }
                             }
-                        } // for(var rdFilter in realm_dimensions)
+                        } //for(var rdFilter in realm_dimensions)
                     }
-                } // for(var realm in realms)
+                } //for(var realm in realms)
 
-                Ext.each(categories, function (category) {
+                Ext.each(categories, function(category) {
                     dataCatalogRoot.appendChild(categoryNodes[category]);
 
                     var categoryMetricMenuItem = categoryMetricMenuItems[category];
@@ -2892,19 +2929,21 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 // Sort the filter entries in the Add Filter drop-down list.
                 // Perform the sort on the text attribute.
                 // JMS, 16 Jan 15
-                filterItems.sort(function (a, b) {
+                filterItems.sort(function(a, b) {
+
                     var nameA = a.text.toLowerCase(),
                         nameB = b.text.toLowerCase();
 
                     if (nameA < nameB) {
-                        // sort string ascending
+                        //sort string ascending
                         return -1;
                     }
                     if (nameA > nameB) {
                         return 1;
                     }
 
-                    return 0; // default return value (no sorting)
+                    return 0; //default return value (no sorting)
+
                 }); // filterItems.sort()
 
                 this.filtersMenu.addItem(filterItems);
@@ -2913,15 +2952,16 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 this.metricsCombo.store.loadData(this.allMetrics, false);
 
                 this.dataCatalogTreeOnDatasetLoad.call(this);
-            } // if(store.getCount() > 0)
+            } //if(store.getCount() > 0)
 
             this.unmask();
             this.fireEvent('dwdesc_loaded');
-        }, this); // dwDescriptionStore.on('load',…
+
+        }, this); //dwDescriptionStore.on('load',…
 
         // ---------------------------------------------------------
 
-        this.on('duration_change', function (/* d*/) {
+        this.on('duration_change', function( /*d*/ ) {
             this.saveQuery();
         });
 
@@ -2955,34 +2995,34 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                  * @param {Ext.form.Radio} checkedRadio
                  * @returns {boolean}
                  */
-                change: function (radioGroup, checkedRadio) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Changed Dataset Type', Ext.encode({
-                        type: checkedRadio.boxLabel
-                    }));
+                'change': function(radioGroup, checkedRadio) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Changed Dataset Type', Ext.encode({
+                            type: checkedRadio.boxLabel
+                        }));
 
-                    var valid = self.validateChart(self._getDisplayTypes(true), 0, checkedRadio.inputValue !== 2);
-                    if (!valid) {
-                        radioGroup.setValue([1, 0]);
-                        return false;
-                    }
+                        var valid = self.validateChart(self._getDisplayTypes(true), 0, checkedRadio.inputValue !== 2);
+                        if (!valid) {
+                            radioGroup.setValue([1, 0]);
+                            return false;
+                        }
 
-                    this.timeseries = checkedRadio.inputValue == 2;
-                    var cm = this.datasetsGridPanel.getColumnModel();
-                    var ind = cm.getIndexById('x_axis');
-                    if (ind > -1) {
-                        cm.setHidden(ind, this.timeseries);
-                    }
-                    ind = cm.getIndexById('trend_line');
-                    if (ind > -1) {
-                        cm.setHidden(ind, !this.timeseries);
-                    }
+                        this.timeseries = checkedRadio.inputValue == 2;
+                        var cm = this.datasetsGridPanel.getColumnModel();
+                        var ind = cm.getIndexById('x_axis');
+                        if (ind > -1) {
+                            cm.setHidden(ind, this.timeseries);
+                        }
+                        ind = cm.getIndexById('trend_line');
+                        if (ind > -1) {
+                            cm.setHidden(ind, !this.timeseries);
+                        }
 
-                    this.saveQuery();
-                } // change
+                        this.saveQuery();
+                    } //change
 
-            } // listeners
+            } //listeners
 
-        }); // this.datasetTypeRadioGroup
+        }); //this.datasetTypeRadioGroup
 
         // ---------------------------------------------------------
         this.defaultMetricDisplayTypeField = CCR.xdmod.ui.getComboBox(CCR.xdmod.ui.AddDataPanel.display_types, ['id', 'text'], 'id', 'text', false, 'Default Metric Display Type');
@@ -2990,7 +3030,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         this.defaultMetricDisplayTypeField.fieldLabel = 'Default Metric<br/>Display Type';
         this.defaultMetricDisplayTypeField.addListener(
             'select',
-            function (combo, record) {
+            function(combo, record) {
                 var newDefault = record.get('id');
                 this.defaultMetricDisplayType = newDefault;
                 this.defaultDatasetConfig.display_type = newDefault;
@@ -3016,22 +3056,24 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 scope: this,
 
-                change: function (textfield, newValue, oldValue) {
+                change: function(textfield, newValue, oldValue) {
                     if (newValue != oldValue) {
+
                         XDMoD.TrackEvent('Metric Explorer', 'Updated chart title', textfield.getValue());
                         this.saveQuery();
                     }
-                }, // change
 
-                specialkey: function (t, e) {
+                }, //change
+
+                specialkey: function(t, e) {
                     if (t.isValid(false) && (e.getKey() == e.ENTER || e.getKey() == e.TAB)) {
                         this.saveQuery();
                     }
-                } // specialkey
+                } //specialkey
 
-            } // listeners
+            } //listeners
 
-        }); // this.chartTitleField
+        }); //this.chartTitleField
 
         // ---------------------------------------------------------
 
@@ -3046,17 +3088,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 scope: this,
 
-                check: function (checkbox, check) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Show Chart Filters in subtitle checkbox', Ext.encode({
-                        checked: check
-                    }));
+                'check': function(checkbox, check) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Clicked on Show Chart Filters in subtitle checkbox', Ext.encode({
+                            checked: check
+                        }));
 
-                    this.show_filters = check;
-                    this.saveQuery();
-                } // check
-            } // listeners
+                        this.show_filters = check;
+                        this.saveQuery();
+                    } //check
+            } //listeners
 
-        }); // this.chartShowSubtitleField
+        }); //this.chartShowSubtitleField
 
         // ---------------------------------------------------------
 
@@ -3069,7 +3111,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             listeners: {
                 check: {
-                    fn: function (checkbox, check) {
+                    fn: function(checkbox, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Clicked on Show Warnings checkbox', Ext.encode({
                             checked: check
                         }));
@@ -3080,7 +3122,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     scope: this
                 }
             }
-        }); // this.showWarningsCheckbox
+        }); //this.showWarningsCheckbox
 
         // ---------------------------------------------------------
 
@@ -3095,18 +3137,18 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 scope: this,
 
-                check: function (checkbox, check) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Invert Axis checkbox', Ext.encode({
-                        checked: check
-                    }));
+                'check': function(checkbox, check) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Invert Axis checkbox', Ext.encode({
+                            checked: check
+                        }));
 
-                    this.swap_xy = check;
-                    this.saveQuery();
-                } // check
+                        this.swap_xy = check;
+                        this.saveQuery();
+                    } //check
 
-            } // listeners
+            } //listeners
 
-        }); // this.chartSwapXYField
+        }); //this.chartSwapXYField
 
         // ---------------------------------------------------------
 
@@ -3121,18 +3163,18 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 scope: this,
 
-                check: function (checkbox, check) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Share Y Axis checkbox', Ext.encode({
-                        checked: check
-                    }));
+                'check': function(checkbox, check) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Share Y Axis checkbox', Ext.encode({
+                            checked: check
+                        }));
 
-                    this.share_y_axis = check;
-                    this.saveQuery();
-                } // check
+                        this.share_y_axis = check;
+                        this.saveQuery();
+                    } //check
 
-            } // listeners
+            } //listeners
 
-        }); // this.shareYAxisField
+        }); //this.shareYAxisField
 
         // ---------------------------------------------------------
 
@@ -3147,18 +3189,18 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 scope: this,
 
-                check: function (checkbox, check) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Hide Tooltip checkbox', Ext.encode({
-                        checked: check
-                    }));
+                'check': function(checkbox, check) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Clicked on the Hide Tooltip checkbox', Ext.encode({
+                            checked: check
+                        }));
 
-                    this.hide_tooltip = check;
-                    this.saveQuery();
-                } // check
+                        this.hide_tooltip = check;
+                        this.saveQuery();
+                    } //check
 
-            } // listeners
+            } //listeners
 
-        }); // this.hideTooltipField
+        }); //this.hideTooltipField
 
         // ---------------------------------------------------------
 
@@ -3182,7 +3224,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 data: XDMoD.Module.MetricExplorer.legend_types
 
-            }), // store
+            }), //store
 
             disabled: false,
             value: this.legend_type,
@@ -3192,13 +3234,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             listeners: {
                 scope: self,
-                select: function (combo, record/* , index */) {
+                select: function(combo, record/*, index */) {
                     self.setLegendValue(record.get('id'), true);
-                } // select
+                }, //select
 
-            } // listeners
+            } //listeners
 
-        }); // this.legendTypeComboBox
+        }); //this.legendTypeComboBox
 
         // ---------------------------------------------------------
 
@@ -3213,7 +3255,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             plugins: new Ext.slider.Tip(),
             listeners: {
                 scope: this,
-                changecomplete: function (slider, newValue, thumb) {
+                'changecomplete': function(slider, newValue, thumb) {
+
                     XDMoD.TrackEvent('Metric Explorer', 'Used the font size slider', Ext.encode({
                         font_size: slider.getValue()
                     }));
@@ -3221,8 +3264,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     this.font_size = slider.getValue();
                     this.saveQuery();
                 }
-            } // listeners
-        }); // this.fontSizeSlider
+            } //listeners
+        }); //this.fontSizeSlider
 
         // ---------------------------------------------------------
 
@@ -3234,16 +3277,16 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             checked: this.featured,
             listeners: {
                 scope: this,
-                check: function (checkbox, check) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Toggled Show in Summary tab checkbox', Ext.encode({
-                        checked: check
-                    }));
+                'check': function(checkbox, check) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Toggled Show in Summary tab checkbox', Ext.encode({
+                            checked: check
+                        }));
 
-                    this.featured = check;
-                    this.saveQuery();
-                } // check
-            } // listeners
-        }); // this.featuredCheckbox
+                        this.featured = check;
+                        this.saveQuery();
+                    } //check
+            } //listeners
+        }); //this.featuredCheckbox
 
         this.trendLineCheckbox = new Ext.form.Checkbox({
             id: 'me_trend_line',
@@ -3255,14 +3298,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             disabled: !this.isTrendLineAvailable(),
             listeners: {
                 scope: this,
-                check: function (checkbox, check) {
+                check: function(checkbox, check) {
                     XDMoD.TrackEvent('Metric Explorer', 'Toggled Show Trend Line checkbox', Ext.encode({
                         checked: check
                     }));
                     this.fireEvent('disable_commit');
 
                     // UPDATE: the data set
-                    this.datasetStore.each(function (record) {
+                    this.datasetStore.each(function(record) {
                         record.set('trend_line', check);
                     });
 
@@ -3280,7 +3323,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             listeners: {
                 check: {
                     scope: this,
-                    fn: function (checkbox, check) {
+                    fn: function(checkbox, check) {
                         XDMoD.TrackEvent('Metric Explorer', 'Toggled "Show Remainder" Checkbox', Ext.encode({
                             checked: check
                         }));
@@ -3310,30 +3353,31 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                  * @param {String} newValue
                  * @param {String} oldValue
                  */
-                change: function (textbox, newValue, oldValue) {
-                    var isValid = this.chartNameTextbox.validate();
-                    if (!isValid) {
-                        this.chartNameTextbox.focus();
-                        return;
-                    }
+                change: function(textbox, newValue, oldValue) {
 
-                    XDMoD.TrackEvent('Metric Explorer', 'Updated the Chart Name', Ext.encode({
-                        original_name: oldValue,
-                        new_name: newValue
-                    }));
+                        var isValid = this.chartNameTextbox.validate();
+                        if (!isValid) {
+                            this.chartNameTextbox.focus();
+                            return;
+                        }
 
-                    if (this.currentQueryRecord) {
-                        this.chartOptionsButton.setText(truncateText(newValue, XDMoD.Module.MetricExplorer.CHART_OPTIONS_MAX_TEXT_LENGTH));
-                        this.chartOptionsButton.setTooltip(newValue);
-                        this.currentQueryRecord.set('name', newValue);
-                        this.currentQueryRecord.stack.add(this.currentQueryRecord.data);
-                    }
-                } // change
+                        XDMoD.TrackEvent('Metric Explorer', 'Updated the Chart Name', Ext.encode({
+                            original_name: oldValue,
+                            new_name: newValue
+                        }));
+
+                        if (this.currentQueryRecord) {
+                            this.chartOptionsButton.setText(truncateText(newValue, XDMoD.Module.MetricExplorer.CHART_OPTIONS_MAX_TEXT_LENGTH));
+                            this.chartOptionsButton.setTooltip(newValue);
+                            this.currentQueryRecord.set('name', newValue);
+                            this.currentQueryRecord.stack.add(this.currentQueryRecord.data);
+                        }
+                    } // change
             }
         });
         // ---------------------------------------------------------
 
-        var getBaseParams = function () {
+        var getBaseParams = function() {
             var baseParams = {},
                 title = this.chartTitleField.getValue();
 
@@ -3348,7 +3392,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             baseParams.show_warnings = this.show_warnings;
             baseParams.show_remainder = this.show_remainder;
             return baseParams;
-        }; // getBaseParams
+
+        }; //getBaseParams
 
         // ---------------------------------------------------------
         var enabledCheckColumn = new Ext.grid.CheckColumn({
@@ -3359,20 +3404,20 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             header: 'Enabled',
             scope: this,
             width: 70,
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-                enabledCheckColumn.checked = checked;
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                    enabledCheckColumn.checked = checked;
+                } //checkchange
 
-        }); // enabledCheckColumn
+        }); //enabledCheckColumn
 
         var onMouseDown = enabledCheckColumn.onMouseDown;
-        var validatedOnMouseDown = function (e, t) {
+        var validatedOnMouseDown = function(e, t) {
             self.selectedDataSeriesIndex = this.grid.getView().findRowIndex(t);
             var record = this.grid.store.getAt(self.selectedDataSeriesIndex);
             var enabled = record.get('enabled');
@@ -3402,35 +3447,38 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 30,
 
-            checkchange: function (rec, data_index, checked) {
+            checkchange: function(rec, data_index, checked) {
+
                 XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
                     column: data_index,
                     realm: rec.data.realm,
                     metric: rec.data.metric,
                     checked: checked
                 }));
-            }, // checkchange
+            }, //checkchange
 
-            renderer: function (v, p, record) {
+            renderer: function(v, p, record) {
                 var isPie = self.isPie();
                 p.css += ' x-grid3-check-col-td';
                 if ((this.disabledDataIndex && !record.data[this.disabledDataIndex]) || (this.enabledNotDataIndex && record.data[this.enabledNotDataIndex])) {
                     return String.format('<div class="{0}">&#160;</div>', this.createId());
                 } else if (!isPie) {
                     return String.format('<div class="x-grid3-check-col{0} {1}">&#160;</div>', v ? '-on' : '', this.createId());
+                } else {
+                    return String.format('<div class="x-grid3-check-col{0} {1} x-item-disabled unselectable=on">&#160;</div>', v ? '-on' : '', this.createId());
                 }
-                return String.format('<div class="x-grid3-check-col{0} {1} x-item-disabled unselectable=on">&#160;</div>', v ? '-on' : '', this.createId());
             }
 
-        }); // logScaleCheckColumn
+        }); //logScaleCheckColumn
 
         var logScaleMouseDown = logScaleCheckColumn.onMouseDown;
-        logScaleCheckColumn.onMouseDown = function (event, comp) {
+        logScaleCheckColumn.onMouseDown = function(event, comp) {
             var isPie = self.isPie();
             if (isPie) {
                 return false;
+            } else {
+                logScaleMouseDown.apply(logScaleCheckColumn, [event, comp]);
             }
-            logScaleMouseDown.apply(logScaleCheckColumn, [event, comp]);
         };
 
         // ---------------------------------------------------------
@@ -3446,16 +3494,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 50,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // valueLabelsCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //valueLabelsCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3472,16 +3521,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 60,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // stdErrCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //stdErrCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3498,16 +3548,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 60,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // stdErrLabelsCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //stdErrLabelsCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3522,16 +3573,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 100,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // longLegendCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //longLegendCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3545,16 +3597,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 140,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // ignoreGlobalFiltersCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //ignoreGlobalFiltersCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3569,16 +3622,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             width: 80,
             hidden: !this.timeseries,
 
-            checkchange: function (rec, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
-                    column: data_index,
-                    realm: rec.data.realm,
-                    metric: rec.data.metric,
-                    checked: checked
-                }));
-            } // checkchange
+            checkchange: function(rec, data_index, checked) {
 
-        }); // trendLineCheckColumn
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled option in Data grid', Ext.encode({
+                        column: data_index,
+                        realm: rec.data.realm,
+                        metric: rec.data.metric,
+                        checked: checked
+                    }));
+                } //checkchange
+
+        }); //trendLineCheckColumn
 
         // ---------------------------------------------------------
 
@@ -3613,26 +3667,26 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 'shadow',
                 'visibility', {
                     name: 'z_index',
-                    convert: function (v /* , record*/) {
-                        if (v === null || v === undefined || v === '') {
+                    convert: function(v /*, record*/ ) {
+                        if (v === null || v === undefined || v === "") {
                             return null;
                         }
                         return v;
                     }
                 }, {
                     name: 'enabled',
-                    convert: function (v /* , record*/) {
+                    convert: function(v /*, record*/ ) {
                         return v !== false;
                     }
                 }
             ]
 
-        }); // this.datasetStore
+        }); //this.datasetStore
 
         // ---------------------------------------------------------
 
-        // delay saving on updated records, chances are user is moving mouse to
-        // next checkbox
+        //delay saving on updated records, chances are user is moving mouse to
+        //next checkbox
 
         /**
          *
@@ -3640,7 +3694,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
          * @param {Ext.data.Record} record
          * @param {Object} operation
          **/
-        this.datasetStoreOnUpdate = function (s, record, operation) {
+        this.datasetStoreOnUpdate = function(s, record, operation) {
             var saved = this.saveQueryFunc(false);
             if (saved === false) {
                 return false;
@@ -3651,31 +3705,33 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // ---------------------------------------------------------
 
-        // load the stuff quickly when the query is loaded
-        this.datasetStore.on('load', function (s, records, opts) {
+        //load the stuff quickly when the query is loaded
+        this.datasetStore.on('load', function(s, records, opts) {
             this.dataCatalogTreeOnDatasetLoad.call(this, records);
         }, this);
         // ---------------------------------------------------------
 
-        this.datasetStore.on('clear', function (s, records, opts) {
+        this.datasetStore.on('clear', function(s, records, opts) {
             var catalogRoot = this.dataCatalogTree.getRootNode();
             this.dataCatalogTreeOnDatasetClear.call(this, records, catalogRoot);
         }, this);
         // ---------------------------------------------------------
 
-        // on adding the dataset, make it appear fast
-        this.datasetStoreOnAdd = function (s, records, index) {
+        //on adding the dataset, make it appear fast
+        this.datasetStoreOnAdd = function(s, records, index) {
             this.saveQueryFunc(false);
             this.dataCatalogTreeOnDatasetAdd.call(this, records, index);
+
         }; // datasetStoreOnAdd()
         this.datasetStore.on('add', this.datasetStoreOnAdd, this);
 
         // ---------------------------------------------------------
 
-        // on removing the dataset, make it disappear fast
-        this.datasetStoreOnRemove = function (s, record, index) {
+        //on removing the dataset, make it disappear fast
+        this.datasetStoreOnRemove = function(s, record, index) {
             this.saveQuery();
             this.dataCatalogTreeOnDatasetRemove.call(this, record, index);
+
         }; // datasetStoreOnRemove
         this.datasetStore.on('remove', this.datasetStoreOnRemove, this);
 
@@ -3686,10 +3742,10 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             text: 'Add Data',
             tooltip: 'Add a new metric to the currently loaded chart',
             menu: this.metricsMenu,
-            handler: function (/* i, e*/) {
+            handler: function( /*i, e*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Add Data button');
             }
-        }); // this.addDatasetButton
+        }); //this.addDatasetButton
 
         // ---------------------------------------------------------
 
@@ -3699,24 +3755,27 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             text: 'Add Filter',
             tooltip: 'Add a global filter to the currently loaded chart',
             menu: this.filtersMenu,
-            handler: function (/* i, e*/) {
+            handler: function( /*i, e*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Create Filter button');
             }
-        }); // this.addFilterButton
+        }); //this.addFilterButton
 
         // ---------------------------------------------------------
 
-        this.getDataset = function (datasetId) {
+        this.getDataset = function(datasetId) {
             var record = null;
             var sm = this.datasetsGridPanel.getSelectionModel();
 
-            // datasetId provides override for interation with chart series
+            //datasetId provides override for interation with chart series
             if (datasetId !== undefined && datasetId !== null) {
-                // find row where id - datasetId;
-                var datasetIndex = this.datasetStore.findBy(function (_record, _id) {
+
+                //find row where id - datasetId;
+                var datasetIndex = this.datasetStore.findBy(function(_record, _id) {
+
                     if (Math.abs(datasetId - _record.data.id) < 1e-14) {
                         return true;
                     }
+
                 }, this);
 
                 if (datasetIndex < 0) {
@@ -3725,24 +3784,28 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 sm.selectRow(datasetIndex);
                 record = sm.getSelected();
+
             }
             return record;
         };
 
         // ---------------------------------------------------------
 
-        this.editDataset = function (datasetId) {
+        this.editDataset = function(datasetId) {
             var self = this;
             var record = null;
             var sm = this.datasetsGridPanel.getSelectionModel();
 
-            // datasetId provides override for interation with chart series
+            //datasetId provides override for interation with chart series
             if (datasetId !== undefined && datasetId !== null) {
-                // find row where id - datasetId;
-                var datasetIndex = this.datasetStore.findBy(function (_record, _id) {
+
+                //find row where id - datasetId;
+                var datasetIndex = this.datasetStore.findBy(function(_record, _id) {
+
                     if (Math.abs(datasetId - _record.data.id) < 1e-14) {
                         return true;
                     }
+
                 }, this);
 
                 if (datasetIndex < 0) {
@@ -3751,6 +3814,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 sm.selectRow(datasetIndex);
                 record = sm.getSelected();
+
             } else {
                 record = sm.getSelected();
             }
@@ -3765,13 +3829,16 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 timeseries: this.timeseries,
                 dimensionsCombo: this.dimensionsCombo,
 
-                cancel_function: function () {
+                cancel_function: function() {
+
                     this.scope.fireEvent('enable_commit', false);
                     addDataMenu.closable = true;
                     addDataMenu.close();
+
                 },
 
-                add_function: function () {
+                add_function: function() {
+
                     this.scope.fireEvent('enable_commit', true);
                     addDataMenu.closable = true;
                     addDataMenu.close();
@@ -3786,7 +3853,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     this.scope.saveQuery();
                 },
 
-                validate: function (field, value) {
+                validate: function(field, value) {
                     if (!CCR.isType(field, CCR.Types.String)) {
                         return false;
                     }
@@ -3797,7 +3864,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     return true;
                 },
 
-                _updateDisplayType: function (field, next) {
+                _updateDisplayType: function(field, next) {
                     var current = this.record.get(field);
                     if (current === 'pie' && next !== 'pie') {
                         self.defaultMetricDisplayType = next;
@@ -3805,12 +3872,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     }
                 },
 
-                _validateDisplayType: function (value) {
+                _validateDisplayType: function(value) {
                     var isAggregate = self.isAggregate();
                     return self.validateChart([value], 0, isAggregate);
                 }
 
-            }); // addDataPanel
+            }); //addDataPanel
 
             // Retrieving a reference to the original select listener so that we
             // can use it in the default case
@@ -3822,14 +3889,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
              * @param {Ext.data.Record} record
              * @param {Integer} index
              */
-            var displayTypeSelect = function (combo, record, index) {
+            var displayTypeSelect = function(combo, record, index) {
                 var valid = self.validateChart(self._getDisplayTypes(true));
                 if (valid) {
                     originalListener.fn.call(addDataPanel, combo, record, index);
                 }
             };
 
-            addDataPanel.on('render', function () {
+            addDataPanel.on('render', function() {
                 addDataPanel.displayTypeCombo.purgeListeners();
                 addDataPanel.displayTypeCombo.on('select', displayTypeSelect);
             });
@@ -3847,23 +3914,23 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 listeners: {
 
-                    beforeclose: function (t) {
+                    'beforeclose': function(t) {
                         return t.closable;
                     },
-                    close: function (t) {
+                    'close': function(t) {
                         CCR.xdmod.ui.Viewer.dontUnmask = false;
                         addDataPanel.hideMenu();
                         t.scope.unmask();
                     },
-                    show: function (t) {
+                    'show': function(t) {
                         CCR.xdmod.ui.Viewer.dontUnmask = true;
                         t.scope.mask();
                         t.scope.fireEvent('disable_commit');
                     }
 
-                } // listeners
+                } //listeners
 
-            }); // addDataMenu
+            }); //addDataMenu
 
             // ---------------------------------------------------------
 
@@ -3875,7 +3942,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             var xy = addDataMenu.el.getAlignToXY(this.datasetsGridPanel.toolbars[0].el, 'tl-bl?');
             xy = addDataMenu.el.adjustForConstraints(xy);
             addDataMenu.setPosition(xy);
-        }; // this.editDataset
+
+        }; //this.editDataset
 
         // ---------------------------------------------------------
 
@@ -3887,26 +3955,29 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             disabled: true,
             scope: this,
 
-            handler: function (/* i, e*/) {
+            handler: function( /*i, e*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Dataset Edit button');
                 this.editDataset.call(this);
             }
 
-        }); // editDatasetButton
+        }); //editDatasetButton
 
         // ---------------------------------------------------------
 
-        this.removeDataset = function (datasetId) {
+        this.removeDataset = function(datasetId) {
+
             var sm = this.datasetsGridPanel.getSelectionModel();
 
-            // datasetId providex over ride for interation with chart series
+            //datasetId providex over ride for interation with chart series
             if (datasetId !== undefined && datasetId !== null) {
-                // find row where id - datasetId;
-                var datasetIndex = this.datasetStore.findBy(function (_record, _id) {
+
+                //find row where id - datasetId;
+                var datasetIndex = this.datasetStore.findBy(function(_record, _id) {
                     var dif = Math.abs(datasetId - _record.data.id);
                     if (dif < 0.00000000000001) {
                         return true;
                     }
+
                 }, this);
 
                 if (datasetIndex < 0) {
@@ -3916,11 +3987,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 sm.selectRow(datasetIndex);
                 var record = sm.getSelected();
                 this.datasetStore.remove(record);
+
             } else {
+
                 var records = this.datasetsGridPanel.getSelectionModel().getSelections();
                 this.datasetStore.remove(records);
+
             }
-        }; // this.removeDataset
+
+        }; //this.removeDataset
 
         // ---------------------------------------------------------
 
@@ -3932,12 +4007,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             disabled: true,
             scope: this,
 
-            handler: function (i /* , e*/) {
+            handler: function(i /*, e*/ ) {
                 XDMoD.TrackEvent('Metric Explorer', 'Clicked on Dataset Delete button');
                 i.scope.removeDataset.call(i.scope);
             }
 
-        }); // removeDatasetButton
+        }); //removeDatasetButton
 
         // ---------------------------------------------------------
 
@@ -3951,7 +4026,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         this.sortTypesCombo = CCR.xdmod.ui.getComboBox(CCR.xdmod.ui.AddDataPanel.sort_types, ['id', 'text'], 'id', 'text', false, 'None');
 
         // ---------------------------------------------------------
-        this.datasetsGridPanelSMOnSelectionChange = function (sm) {
+        this.datasetsGridPanelSMOnSelectionChange = function(sm) {
             var disabled = sm.getCount() <= 0;
             if (sm.getCount() == 1) {
                 var record = sm.getSelections()[0],
@@ -3988,7 +4063,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             plugins: [
 
-                // this.metricsGridPanelEditor,
+                //this.metricsGridPanelEditor,
                 enabledCheckColumn,
                 // xAxisCheckColumn,
                 logScaleCheckColumn,
@@ -3997,21 +4072,21 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 stdErrLabelsCheckColumn,
                 longLegendCheckColumn,
                 ignoreGlobalFiltersCheckColumn,
-                trendLineCheckColumn // ,
-                // new Ext.ux.plugins.ContainerBodyMask ({ msg:'No data selected.<br/> Click on <img class="x-panel-inline-icon add_data" src="gui/lib/extjs/resources/images/default/s.gif" alt=""> to add data.', masked:true})
+                trendLineCheckColumn //,
+                //new Ext.ux.plugins.ContainerBodyMask ({ msg:'No data selected.<br/> Click on <img class="x-panel-inline-icon add_data" src="gui/lib/extjs/resources/images/default/s.gif" alt=""> to add data.', masked:true})
 
-            ], // plugins
+            ], //plugins
 
             listeners: {
 
                 scope: this,
 
-                rowdblclick: function (t, rowIndex, e) {
+                rowdblclick: function(t, rowIndex, e) {
                     XDMoD.TrackEvent('Metric Explorer', 'Double-clicked on dataset entry in list');
                     this.editDataset.call(this);
                 }
 
-            }, // listeners
+            }, //listeners
 
             store: this.datasetStore,
 
@@ -4019,7 +4094,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 emptyText: 'No data selected.<br/> Click on <img class="x-panel-inline-icon add_data" src="gui/lib/extjs/resources/images/default/s.gif" alt=""> to add data.'
 
-            }, // viewConfig
+            }, //viewConfig
 
             columns: [
                 enabledCheckColumn,
@@ -4032,7 +4107,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     // Use the realm to lookup the category.
                     dataIndex: 'realm',
                     renderer: {
-                        fn: function (value) {
+                        fn: function(value) {
                             return Ext.util.Format.htmlEncode(
                                 XDMoD.Module.MetricExplorer.getCategoryForRealm(value)
                             );
@@ -4103,13 +4178,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 longLegendCheckColumn,
                 ignoreGlobalFiltersCheckColumn,
                 trendLineCheckColumn
-            ], // columns
+            ], //columns
             tbar: [
                 editDatasetButton,
                 '-',
                 removeDatasetButton
             ]
-        }); // this.datasetsGridPanel
+        }); //this.datasetsGridPanel
 
         // ---------------------------------------------------------
 
@@ -4117,15 +4192,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         this.filtersStore.on('load', this.filterStoreLoad, this);
 
-        this.filtersStore.on('add', function () {
+        this.filtersStore.on('add', function() {
             this.saveQuery();
         }, this);
 
-        this.filtersStore.on('remove', function () {
+        this.filtersStore.on('remove', function() {
             this.saveQuery();
         }, this);
 
-        this.filtersStore.on('update', function (t, record, op) {
+        this.filtersStore.on('update', function(t, record, op) {
             record.commit(true);
             this.saveQuery();
         }, this);
@@ -4135,28 +4210,28 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         var checkAllButton = new Ext.Button({
             text: 'Check All',
             scope: this,
-            handler: function (/* b, e*/) {
-                XDMoD.TrackEvent('Metric Explorer', 'Clicked on Check All in Chart Filters pane');
+            handler: function( /*b, e*/ ) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Check All in Chart Filters pane');
 
-                this.filtersStore.each(function (r) {
-                    r.set('checked', true);
-                });
-            } // handler
-        }); // checkAllButton
+                    this.filtersStore.each(function(r) {
+                        r.set('checked', true);
+                    });
+                } //handler
+        }); //checkAllButton
 
         // ---------------------------------------------------------
 
         var uncheckAllButton = new Ext.Button({
             text: 'Uncheck All',
             scope: this,
-            handler: function (/* b, e*/) {
-                XDMoD.TrackEvent('Metric Explorer', 'Clicked on Uncheck All in Chart Filters pane');
+            handler: function( /*b, e*/ ) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Uncheck All in Chart Filters pane');
 
-                this.filtersStore.each(function (r) {
-                    r.set('checked', false);
-                });
-            } // handler
-        }); // uncheckAllButton
+                    this.filtersStore.each(function(r) {
+                        r.set('checked', false);
+                    });
+                } //handler
+        }); //uncheckAllButton
 
         // ---------------------------------------------------------
 
@@ -4169,14 +4244,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             scope: this,
             width: 50,
             hidden: false,
-            checkchange: function (record, data_index, checked) {
-                XDMoD.TrackEvent('Metric Explorer', 'Toggled filter checkbox', Ext.encode({
-                    dimension: record.data.dimension_id,
-                    value: record.data.value_name,
-                    checked: checked
-                }));
-            } // checkchange
-        }); // activeFilterCheckColumn
+            checkchange: function(record, data_index, checked) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Toggled filter checkbox', Ext.encode({
+                        dimension: record.data.dimension_id,
+                        value: record.data.value_name,
+                        checked: checked
+                    }));
+                } //checkchange
+        }); //activeFilterCheckColumn
 
         // ---------------------------------------------------------
 
@@ -4186,21 +4261,21 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             text: 'Delete',
             disabled: true,
             scope: this,
-            handler: function (/* i, e*/) {
-                XDMoD.TrackEvent('Metric Explorer', 'Clicked on Delete in Chart Filters pane');
+            handler: function( /*i, e*/ ) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Delete in Chart Filters pane');
 
-                var records = this.filtersGridPanel.getSelectionModel().getSelections();
+                    var records = this.filtersGridPanel.getSelectionModel().getSelections();
 
-                for (var t = 0; t < records.length; t++) {
-                    XDMoD.TrackEvent('Metric Explorer', 'Confirmed deletion of filter', Ext.encode({
-                        dimension: records[t].data.dimension_id,
-                        value: records[t].data.value_name
-                    }));
-                } // for (each record selected)
+                    for (var t = 0; t < records.length; t++) {
+                        XDMoD.TrackEvent('Metric Explorer', 'Confirmed deletion of filter', Ext.encode({
+                            dimension: records[t].data.dimension_id,
+                            value: records[t].data.value_name
+                        }));
+                    } //for (each record selected)
 
-                this.filtersGridPanel.store.remove(records);
-            } // handler
-        }); // removeFilterItem
+                    this.filtersGridPanel.store.remove(records);
+                } //handler
+        }); //removeFilterItem
 
         // ---------------------------------------------------------
 
@@ -4216,25 +4291,25 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             sm: new Ext.grid.RowSelectionModel({
                 singleSelect: false,
                 listeners: {
-                    rowselect: function (sm, row_index, record) {
+                    'rowselect': function(sm, row_index, record) {
                         XDMoD.TrackEvent('Metric Explorer', 'Selected a chart filter', Ext.encode({
                             dimension: record.data.dimension_id,
                             value: record.data.value_name
                         }));
                     },
-                    rowdeselect: function (sm, row_index, record) {
+                    'rowdeselect': function(sm, row_index, record) {
                         XDMoD.TrackEvent('Metric Explorer', 'De-selected a chart filter', Ext.encode({
                             dimension: record.data.dimension_id,
                             value: record.data.value_name
                         }));
                     },
-                    selectionchange: function (sm) {
+                    'selectionchange': function(sm) {
                         removeFilterItem.setDisabled(sm.getCount() <= 0);
                     }
-                } // listeners
-            }), // Ext.grid.RowSelectionModel
+                } //listeners
+            }), //Ext.grid.RowSelectionModel
             plugins: [
-                activeFilterCheckColumn // ,
+                activeFilterCheckColumn //,
             ],
             autoExpandColumn: 'value_name',
             store: this.filtersStore,
@@ -4266,11 +4341,11 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     // Find the applicable categories using the dimension.
                     dataIndex: 'dimension_id',
                     renderer: {
-                        fn: function (value) {
+                        fn: function(value) {
                             var realms = XDMoD.Module.MetricExplorer.getRealmsForDimension(value);
 
                             var categoryMapping = {};
-                            Ext.each(realms, function (realm) {
+                            Ext.each(realms, function(realm) {
                                 var category = XDMoD.Module.MetricExplorer.getCategoryForRealm(realm);
                                 categoryMapping[category] = true;
                             }, this);
@@ -4291,11 +4366,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 '-',
                 removeFilterItem
             ]
-        }); // this.filtersGridPanel
+        }); //this.filtersGridPanel
 
         // ---------------------------------------------------------
 
-        var filterButtonHandler = function (el, dim_id, dim_label, realms) {
+        var filterButtonHandler = function(el, dim_id, dim_label, realms) {
+
             if (!dim_id || !dim_label) {
                 return;
             }
@@ -4311,10 +4387,10 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             this.fireEvent('disable_commit');
 
-            addFilterMenu.items.items[0].on('ok', function () {
+            addFilterMenu.items.items[0].on('ok', function() {
                 self.fireEvent('enable_commit', true);
             });
-            addFilterMenu.items.items[0].on('cancel', function () {
+            addFilterMenu.items.items[0].on('cancel', function() {
                 self.fireEvent('enable_commit', false);
             });
 
@@ -4322,14 +4398,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             addFilterMenu.center();
             var xy = addFilterMenu.el.getAlignToXY(this.filtersGridPanel.toolbars[0].el, 'tl-bl?');
 
-            // constrain to the viewport.
+            //constrain to the viewport.
             xy = addFilterMenu.el.adjustForConstraints(xy);
             addFilterMenu.setPosition(xy);
-        }; // filterButtonHandler
+
+        }; //filterButtonHandler
 
         // ---------------------------------------------------------
 
-        var addDataButtonHandler = function (el, metric, realm, realms) {
+        var addDataButtonHandler = function(el, metric, realm, realms) {
             var config = Ext.apply({}, this.defaultDatasetConfig);
             Ext.apply(config, {
                 realm: realm,
@@ -4341,16 +4418,16 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 realms: realms,
                 timeseries: this.timeseries,
                 dimensionsCombo: this.dimensionsCombo,
-                cancel_function: function () {
+                cancel_function: function() {
                     addDataMenu.closable = true;
                     addDataMenu.close();
-                }, // cancel_function
-                add_function: function () {
-                    addDataMenu.scope.datasetsGridPanel.store.add(this.record);
-                    addDataMenu.closable = true;
-                    addDataMenu.close();
-                } // add_function
-            }); // addDataPanel
+                }, //cancel_function
+                add_function: function() {
+                        addDataMenu.scope.datasetsGridPanel.store.add(this.record);
+                        addDataMenu.closable = true;
+                        addDataMenu.close();
+                    } //add_function
+            }); //addDataPanel
 
             // Retrieving a reference to the original select listener so that we
             // can use it in the default case
@@ -4362,7 +4439,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
              * @param {Ext.data.Record} record
              * @param {Integer} index
              */
-            var displayTypeSelect = function (combo, record, index) {
+            var displayTypeSelect = function(combo, record, index) {
                 var chartType = combo.getValue();
                 var valid = self.validateChart(
                     [chartType]
@@ -4372,7 +4449,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 }
             };
 
-            addDataPanel.on('render', function () {
+            addDataPanel.on('render', function() {
                 addDataPanel.displayTypeCombo.purgeListeners();
                 addDataPanel.displayTypeCombo.on('select', displayTypeSelect);
             });
@@ -4385,26 +4462,26 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 ownerCt: this,
                 resizable: false,
                 listeners: {
-                    beforeclose: function (t) {
+                    'beforeclose': function(t) {
                         return t.closable;
                     },
-                    close: function (t) {
+                    'close': function(t) {
                         CCR.xdmod.ui.Viewer.dontUnmask = false;
                         addDataPanel.hideMenu();
                         t.scope.unmask();
                     },
-                    show: function (t) {
+                    'show': function(t) {
                         CCR.xdmod.ui.Viewer.dontUnmask = true;
                         t.scope.mask();
                     }
-                } // listeners
-            }); // addDataMenu
+                } //listeners
+            }); //addDataMenu
             addDataMenu.show();
             addDataMenu.center();
             var xy = addDataMenu.el.getAlignToXY(el, 'tl-bl?');
             xy = addDataMenu.el.adjustForConstraints(xy);
             addDataMenu.setPosition(xy);
-        }; // addDataButtonHandler
+        }; //addDataButtonHandler
 
         // ---------------------------------------------------------
 
@@ -4432,15 +4509,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         method: 'DELETE'
                     }
                 }
-            }), // proxy
+            }), //proxy
 
             idProperty: 'recordid',
             root: 'data',
 
             fields: [{
-                name: 'name',
-                sortType: Ext.data.SortTypes.asUCString
-            },
+                    name: 'name',
+                    sortType: Ext.data.SortTypes.asUCString
+                },
                 'config',
                 'ts',
                 'recordid'
@@ -4453,12 +4530,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 encode: true,
                 writeAllFields: false
 
-            }), // writer
+            }), //writer
             listeners: {
                 scope: this,
-                write: function (store, action, result, res, rs) {
+                write: function(store, action, result, res, rs) {
                     var sm = this.queriesGridPanel.getSelectionModel();
-                    var recIndex = store.findBy(function (record) {
+                    var recIndex = store.findBy(function(record) {
                         if (record.get('recordid') === rs.id) {
                             return true;
                         }
@@ -4467,7 +4544,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         sm.selectRow(recIndex, false);
                     }
                 },
-                beforesave: function (store, data) {
+                beforesave: function(store, data) {
                     for (var key in data) {
                         if (data.hasOwnProperty(key)) {
                             var found = null;
@@ -4486,112 +4563,112 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         }
                     }
                 }
-            } // listeners
-        }); // new CCR.xdmod.CustomJsonStore
+            } //listeners
+        }); //new CCR.xdmod.CustomJsonStore
 
-        var newChartHandler = function (b) {
-            XDMoD.TrackEvent('Metric Explorer', 'Clicked on New Chart button');
+        var newChartHandler = function(b) {
+                XDMoD.TrackEvent('Metric Explorer', 'Clicked on New Chart button');
 
-            var createQueryHandler = function () {
-                var text = Ext.util.Format.htmlEncode(nameField.getValue());
+                var createQueryHandler = function() {
+                    var text = Ext.util.Format.htmlEncode(nameField.getValue());
 
-                if (text === '') {
-                    Ext.Msg.alert('Name Invalid', 'Please enter a valid name');
-                } else {
-                    var recIndex = this.queriesStore.findBy(function (record) {
-                        if (record.get('name') === text) {
-                            return true;
-                        }
-                    });
-                    if (recIndex < 0) {
-                        var preserve = preserveFilters.getValue();
+                    if (text === '') {
+                        Ext.Msg.alert('Name Invalid', 'Please enter a valid name');
+                    } else {
+                        var recIndex = this.queriesStore.findBy(function(record) {
+                            if (record.get('name') === text) {
+                                return true;
+                            }
+                        });
+                        if (recIndex < 0) {
+                            var preserve = preserveFilters.getValue();
 
                             // Make sure that we reset the UI / state prior to
                             // attempting to create a new query / chart.
-                        this.reset(preserve);
+                            this.reset(preserve);
 
-                        var initialConfig = {
-                            show_warnings: true,
-                            timeseries: b.timeseries,
-                            defaultDatasetConfig: {
-                                display_type: b.value
-                            }
-                        };
-                        this.createQueryFunc(null, null, text, undefined, preserve, initialConfig);
-                        win.close();
-                    } else {
-                        Ext.Msg.alert('Name in use', 'Please enter a unique name');
+                            var initialConfig = {
+                                show_warnings: true,
+                                timeseries: b.timeseries,
+                                defaultDatasetConfig: {
+                                    display_type: b.value
+                                }
+                            };
+                            this.createQueryFunc(null, null, text, undefined, preserve, initialConfig);
+                            win.close();
+                        } else {
+                            Ext.Msg.alert('Name in use', 'Please enter a unique name');
+                        }
                     }
-                }
-            };
+                };
 
-            var preserveFilters = new Ext.form.Checkbox({
-                xtype: 'checkbox',
-                listeners: {
-                    scope: this,
-                    check: function (checkbox, check) {
-                        XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked the Preserve Filters checkbox', Ext.encode({
-                            checked: check
-                        }));
-                    } // check
-                } // listeners
-            });
+                var preserveFilters = new Ext.form.Checkbox({
+                    xtype: 'checkbox',
+                    listeners: {
+                        scope: this,
+                        'check': function(checkbox, check) {
+                                XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked the Preserve Filters checkbox', Ext.encode({
+                                    checked: check
+                                }));
+                            } //check
+                    } //listeners
+                });
 
-            var nameField = new Ext.form.TextField({
-                fieldLabel: 'Chart Name',
-                listeners: {
-                    scope: this,
-                    specialkey: function (field, e) {
+                var nameField = new Ext.form.TextField({
+                    fieldLabel: 'Chart Name',
+                    listeners: {
+                        scope: this,
+                        specialkey: function(field, e) {
                             // e.HOME, e.END, e.PAGE_UP, e.PAGE_DOWN,
                             // e.TAB, e.ESC, arrow keys: e.LEFT, e.RIGHT, e.UP, e.DOWN
-                        if (e.getKey() == e.ENTER) {
-                            XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Pressed enter in textbox', Ext.encode({
-                                input_text: field.getValue()
-                            }));
-                            createQueryHandler.call(this);
+                            if (e.getKey() == e.ENTER) {
+                                XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Pressed enter in textbox', Ext.encode({
+                                    input_text: field.getValue()
+                                }));
+                                createQueryHandler.call(this);
+                            }
+                        },
+                        afterrender: function( /*field, l*/ ) {
+                            nameField.focus(true, 100);
+                        }
+                    }
+                });
+                var win = new Ext.Window({
+                    width: 300,
+                    //height: 100,
+                    resizable: false,
+                    modal: true,
+                    title: 'New Chart',
+                    layout: 'fit',
+                    scope: this,
+                    items: nameField,
+                    listeners: {
+                        close: function() {
+                            XDMoD.TrackEvent('Metric Explorer', 'New Chart prompt closed');
                         }
                     },
-                    afterrender: function (/* field, l*/) {
-                        nameField.focus(true, 100);
-                    }
-                }
-            });
-            var win = new Ext.Window({
-                width: 300,
-                    // height: 100,
-                resizable: false,
-                modal: true,
-                title: 'New Chart',
-                layout: 'fit',
-                scope: this,
-                items: nameField,
-                listeners: {
-                    close: function () {
-                        XDMoD.TrackEvent('Metric Explorer', 'New Chart prompt closed');
-                    }
-                },
-                buttons: [
-                    new Ext.Toolbar.TextItem('Preserve Filters'),
-                    preserveFilters, {
-                        text: 'Ok',
-                        scope: this,
-                        handler: function () {
-                            XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked on Ok');
-                            createQueryHandler.call(this);
+                    buttons: [
+                        new Ext.Toolbar.TextItem('Preserve Filters'),
+                        preserveFilters, {
+                            text: 'Ok',
+                            scope: this,
+                            handler: function() {
+                                XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked on Ok');
+                                createQueryHandler.call(this);
+                            }
+                        }, {
+                            text: 'Cancel',
+                            handler: function() {
+                                XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked on Cancel');
+                                win.close();
+                            }
                         }
-                    }, {
-                        text: 'Cancel',
-                        handler: function () {
-                            XDMoD.TrackEvent('Metric Explorer', 'New Chart -> Clicked on Cancel');
-                            win.close();
-                        }
-                    }
-                ]
-            });
-            win.show(this);
-        }; // handler
+                    ]
+                });
+                win.show(this);
+            }; //handler
         var newChartMenuItems = [];
-        Ext.each(['Timeseries', 'Aggregate'], function (pmi) {
+        Ext.each(['Timeseries', 'Aggregate'], function(pmi) {
             var r = {
                 id: 'new record',
                 timeseries: pmi === 'Timeseries',
@@ -4609,8 +4686,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         newChartHandler,
                         this,
                         {
-                            newChart: true,
-                            timeseries: pmi === 'Timeseries'
+                          newChart: true,
+                          timeseries: 'Timeseries' === pmi
                         })
                 })
             });
@@ -4626,7 +4703,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 ignoreParentClicks: true,
                 items: newChartMenuItems
             })
-        }); // this.createQuery
+        }); //this.createQuery
 
         // ---------------------------------------------------------
 
@@ -4638,12 +4715,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             iconCls: 'save_as',
             scope: this,
 
-            handler: function (b) {
-                XDMoD.TrackEvent('Metric Explorer', 'Clicked on Save As button');
+            handler: function(b) {
 
-                Ext.Msg.prompt(
+                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Save As button');
+
+                    Ext.Msg.prompt(
                         'Save As', 'Please enter a name for the chart:',
-                        function (btn, text) {
+                        function(btn, text) {
                             if (btn == 'ok') {
                                 XDMoD.TrackEvent('Metric Explorer', 'Save As -> Confirmed new name', Ext.encode({
                                     text_field: text
@@ -4651,11 +4729,11 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                 if (text === '') {
                                     Ext.Msg.alert('Name Invalid', 'Please enter a valid name');
                                 } else {
-                                    var recIndex = this.queriesStore.findBy(function (record) {
+                                    var recIndex = this.queriesStore.findBy(function(record) {
                                         if (record.get('name') === text) {
                                             return true;
                                         }
-                                    }); // .find('name', text, 0, false, true);
+                                    }); //.find('name', text, 0, false, true);
                                     if (recIndex < 0) {
                                         var isPhantom = self.currentQueryRecord.phantom;
                                         if (isPhantom) {
@@ -4688,16 +4766,16 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                                         Ext.Msg.alert('Name in use', 'Please enter a unique name');
                                     }
                                 }
-                            } // if (btn == 'ok')
+                            } //if (btn == 'ok')
                             else {
                                 XDMoD.TrackEvent('Metric Explorer', 'Closed Save As prompt');
                             }
-                        }, // function(btn, text)
+                        }, //function(btn, text)
                         this,
                         false
-                    ); // Ext.Msg.prompt
-            } // handler
-        }); // this.saveAsQuery
+                    ); //Ext.Msg.prompt
+                } //handler
+        }); //this.saveAsQuery
 
         // ---------------------------------------------------------
 
@@ -4707,49 +4785,49 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             iconCls: 'delete2',
             tooltip: 'Delete the currently selected chart',
             scope: this,
-            handler: function (b, e) {
-                XDMoD.TrackEvent('Metric Explorer', 'Clicked on Delete selected chart button');
+            handler: function(b, e) {
+                    XDMoD.TrackEvent('Metric Explorer', 'Clicked on Delete selected chart button');
 
-                var sm = this.queriesGridPanel.getSelectionModel();
-                var rec = sm.getSelected();
-                var deletionMessageSubject;
-                if (rec) {
-                    deletionMessageSubject = '"' + rec.get('name') + '"';
-                } else {
-                    deletionMessageSubject = 'your scratchpad chart';
-                }
+                    var sm = this.queriesGridPanel.getSelectionModel();
+                    var rec = sm.getSelected();
+                    var deletionMessageSubject;
+                    if (rec) {
+                        deletionMessageSubject = "\"" + rec.get("name") + "\"";
+                    } else {
+                        deletionMessageSubject = "your scratchpad chart";
+                    }
 
-                Ext.Msg.show({
-                    scope: this,
-                    maxWidth: 800,
-                    minWidth: 400,
-                    title: 'Delete Selected Chart',
-                    icon: Ext.MessageBox.QUESTION,
-                    msg: 'Are you sure you want to delete ' + deletionMessageSubject + '?<br><b>This action cannot be undone.</b>',
-                    buttons: Ext.Msg.YESNO,
-                    fn: function (resp) {
-                        if (resp === 'yes') {
-                            var trackingData;
-                            if (rec) {
-                                trackingData = rec.data.name;
-                                this.queriesStore.remove(rec);
-                                this.queriesStore.save();
-                            } else {
-                                trackingData = '(scratchpad chart)';
-                            }
-                            this.reset();
-                            this.createQueryFunc.call(this, null, null, null, null, null, null, false);
-                            this.reloadChart.call(this);
+                    Ext.Msg.show({
+                        scope: this,
+                        maxWidth: 800,
+                        minWidth: 400,
+                        title: 'Delete Selected Chart',
+                        icon: Ext.MessageBox.QUESTION,
+                        msg: 'Are you sure you want to delete ' + deletionMessageSubject + '?<br><b>This action cannot be undone.</b>',
+                        buttons: Ext.Msg.YESNO,
+                        fn: function(resp) {
+                                if (resp === 'yes') {
+                                    var trackingData;
+                                    if (rec) {
+                                        trackingData = rec.data.name;
+                                        this.queriesStore.remove(rec);
+                                        this.queriesStore.save();
+                                    } else {
+                                        trackingData = "(scratchpad chart)";
+                                    }
+                                    this.reset();
+                                    this.createQueryFunc.call(this, null, null, null, null, null, null, false);
+                                    this.reloadChart.call(this);
 
-                            XDMoD.TrackEvent('Metric Explorer', 'Confirmed deletion of chart', trackingData);
-                        } // if (resp === 'yes')
-                        else {
-                            XDMoD.TrackEvent('Metric Explorer', 'Dismissed chart deletion confirm dialog');
-                        }
-                    } // fn
-                }); // Ext.Msg.show
-            } // handler
-        }); // this.deleteQuery
+                                    XDMoD.TrackEvent('Metric Explorer', 'Confirmed deletion of chart', trackingData);
+                                } //if (resp === 'yes')
+                                else {
+                                    XDMoD.TrackEvent('Metric Explorer', 'Dismissed chart deletion confirm dialog');
+                                }
+                            } //fn
+                    }); //Ext.Msg.show
+                } //handler
+        }); //this.deleteQuery
 
         // ---------------------------------------------------------
 
@@ -4762,14 +4840,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             hideTrigger1: true,
             enableKeyEvents: true,
             emptyText: 'Search',
-            onTrigger1Click: function () {
+            onTrigger1Click: function() {
                 XDMoD.TrackEvent('Metric Explorer', 'Cleared chart search field');
 
                 this.store.clearFilter();
                 this.el.dom.value = '';
                 this.triggers[0].hide();
-            }, // onTrigger1Click
-            onTrigger2Click: function () {
+            }, //onTrigger1Click
+            onTrigger2Click: function() {
                 var v = this.getRawValue();
                 if (v.length < 1) {
                     this.onTrigger1Click();
@@ -4782,23 +4860,24 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
                 this.store.filter('name', v, true, true);
                 this.triggers[0].show();
-            }, // onTrigger2Click
+            }, //onTrigger2Click
             listeners: {
                 scope: this,
-                specialkey: function (field, e) {
+                'specialkey': function(field, e) {
                     // e.HOME, e.END, e.PAGE_UP, e.PAGE_DOWN,
                     // e.TAB, e.ESC, arrow keys: e.LEFT, e.RIGHT, e.UP, e.DOWN
                     if (e.getKey() == e.ENTER) {
                         searchField.onTrigger2Click();
                     }
                 }
-            } // listeners
+            } //listeners
 
-        }); // searchField
+        }); //searchField
 
         // ---------------------------------------------------------
 
-        this.queriesGridPanelSMRowSelect = function (t, rowIndex, r) {
+        this.queriesGridPanelSMRowSelect = function(t, rowIndex, r) {
+
             XDMoD.TrackEvent('Metric Explorer', 'Selected chart from list', r.data.name);
             Ext.menu.MenuMgr.hideAll();
 
@@ -4816,7 +4895,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 this.currentQueryRecord.stack = new XDMoD.ChangeStack({
                     baseParams: r.data,
                     listeners: {
-                        update: function (changeStack, record, action) {
+                        'update': function(changeStack, record, action) {
                             self.handleChartModification(changeStack, record, action);
                         }
                     }
@@ -4830,7 +4909,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             singleSelect: true,
             // private (supposedly...)
-            handleMouseDown: function (g, rowIndex, e) { // prevent deselection of only selected row.
+            handleMouseDown: function(g, rowIndex, e) { //prevent deselection of only selected row.
                 if (e.button !== 0 || this.isLocked()) {
                     return;
                 }
@@ -4843,14 +4922,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 } else {
                     var isSelected = this.isSelected(rowIndex);
                     if (e.ctrlKey && isSelected) {
-                        // this.deselectRow(rowIndex);
+                        //this.deselectRow(rowIndex);
                     } else if (!isSelected || this.getCount() > 1) {
                         this.selectRow(rowIndex, e.ctrlKey || e.shiftKey);
                         view.focusRow(rowIndex);
                     }
                 }
             }
-        }); // sm
+        }); //sm
 
         this.queriesGridPanelSM.on('rowselect', this.queriesGridPanelSMRowSelect, this);
 
@@ -4867,13 +4946,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             autoExpandColumn: 'name',
             scope: this,
             viewConfig: {
-                getRowClass: function (record, index, rowParams /* , store*/) {
+                getRowClass: function(record, index, rowParams /*, store*/ ) {
                     if (record.stack && !record.stack.isMarked()) {
-                        rowParams.tstyle += 'color: #AA0000;';
+                        rowParams.tstyle += "color: #AA0000;";
                     } else {
-                        rowParams.tstyle += 'color: #000000;';
+                        rowParams.tstyle += "color: #000000;";
                     }
-                    return '';
+                    return "";
                 }
             },
             flex: 80,
@@ -4898,7 +4977,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 width: 140,
                 dataIndex: 'ts',
                 align: 'center',
-                renderer: function (ts, metaData, record /* , rowIndex, colIndex, store*/) {
+                renderer: function(ts, metaData, record /*, rowIndex, colIndex, store*/ ) {
                     // if unsaved chart record, display icon and tooltip:
                     if (record.stack && !record.stack.isMarked()) {
                         /* eslint-disable no-param-reassign */
@@ -4909,9 +4988,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     return Ext.util.Format.date(new Date(ts * 1000).toString(), 'Y-m-d H:i:s');
                 },
                 sortable: true
-            }], // columns
+            }], //columns
             sm: this.queriesGridPanelSM
-        }); // this.queriesGridPanel
+        }); //this.queriesGridPanel
 
         // ---------------------------------------------------------
 
@@ -4942,9 +5021,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                      * @param   {boolean}           checked
                      * @returns {boolean}
                      */
-                    fn: function (node, checked) {
+                    fn: function(node, checked) {
                         var record_id = node.id;
-                        var record_index = this.datasetStore.findBy(function (record) {
+                        var record_index = this.datasetStore.findBy(function(record) {
                             if (record.get('id') === record_id) {
                                 return true;
                             }
@@ -4964,7 +5043,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                             // any further event processing for this event
                             // chain
                             var toggleCheck = node.ui.toggleCheck;
-                            node.ui.toggleCheck = function (checked) {
+                            node.ui.toggleCheck = function(checked) {
                                 var cb = this.checkbox;
                                 if (!cb) {
                                     return false;
@@ -4994,8 +5073,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // --- dataCatalogTreeOnDataset[Action] functions ---
 
-        this.dataCatalogTreeOnDatasetSelect = function (record) {
-            // console.log("this.dataCatalogTreeOnDatasetSelect");
+        this.dataCatalogTreeOnDatasetSelect = function(record) {
+            //console.log("this.dataCatalogTreeOnDatasetSelect");
             if (!record) {
                 return;
             }
@@ -5009,13 +5088,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // -----------------------------------------------------------------
 
-        this.dataCatalogTreeOnDatasetLoad = function (records) {
-            // console.log("this.dataCatalogTreeOnDatasetLoad");
+        this.dataCatalogTreeOnDatasetLoad = function(records) {
+            //console.log("this.dataCatalogTreeOnDatasetLoad");
             var catalogRoot = this.dataCatalogTree.getRootNode();
 
             this.dataCatalogTreeOnDatasetClear.call(this, records, catalogRoot);
 
-            var addFunc = function (record) {
+            var addFunc = function(record) {
                 this.addDatasetToCatalogTree.call(this, record, catalogRoot);
             };
 
@@ -5027,13 +5106,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             // JMS: update the filter list:
             this.updateAvailableFilterList();
+
         }; // dataCatalogTreeOnDatasetLoad()
 
         // -----------------------------------------------------------------
 
-        this.dataCatalogTreeOnDatasetClear = function (records, catalogRoot) {
-            // console.log("this.dataCatalogTreeOnDatasetClear");
-            catalogRoot.cascade(function (node) {
+        this.dataCatalogTreeOnDatasetClear = function(records, catalogRoot) {
+            //console.log("this.dataCatalogTreeOnDatasetClear");
+            catalogRoot.cascade(function(node) {
                 if (node.attributes.type && node.attributes.type == 'metric') {
                     node.removeAll(true);
                     node.collapse();
@@ -5044,8 +5124,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // -----------------------------------------------------------------
 
-        this.dataCatalogTreeOnDatasetUpdate = function (record) {
-            // console.log("this.dataCatalogTreeOnDatasetUpdate");
+        this.dataCatalogTreeOnDatasetUpdate = function(record) {
+            //console.log("this.dataCatalogTreeOnDatasetUpdate");
             var catalogRoot = this.dataCatalogTree.getRootNode();
 
             this.dataCatalogTreeOnDatasetRemove.call(this, record);
@@ -5057,10 +5137,11 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         // Create and return an array of realm names that have metrics
         // plotted in the current plot.
         // JMS Jan 15
-        this.getEnabledRealmsList = function (records) {
+        this.getEnabledRealmsList = function(records) {
+
             var enabledList = [];
 
-            var getEnabled = function (record) {
+            var getEnabled = function(record) {
                 var realm = record.get('realm');
 
                 // Create a list of distinct names of enabled realms:
@@ -5076,7 +5157,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 this.datasetStore.each(getEnabled, this);
             }
 
-            // console.log("this.getEnabledRealmsList, enabledList: " + enabledList);
+            //console.log("this.getEnabledRealmsList, enabledList: " + enabledList);
             return enabledList;
         }; //  getEnabledRealmsList()
 
@@ -5090,7 +5171,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
          *
          * @param {Boolean} show
          */
-        this.updateRawDataWindowVisibility = function (show) {
+        this.updateRawDataWindowVisibility = function(show) {
             show = show !== undefined ? show : CCR.xdmod.ui.metricExplorer.rawDataShowing;
             if (typeof show === 'boolean' &&
                 CCR.xdmod.ui.metricExplorer.rawdataWindow) {
@@ -5107,14 +5188,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         // Update the enabled/disabled filters in the filter list
         // based on the realms represented in the current plot
         // JMS Jan 15
-        this.updateAvailableFilterList = function () {
-            // console.time("update available");
+        this.updateAvailableFilterList = function() {
+            //console.time("update available");
 
             // get a list of the currently plotted realms:
             var enabledRealms = this.getEnabledRealmsList();
 
             // for each item in the filtersMenu,
-            this.filtersMenu.items.each(function (item) {
+            this.filtersMenu.items.each(function(item) {
+
                 // Get the item's realms array, if it exists.
                 var iRealms = item.realms;
                 if (iRealms === undefined) {
@@ -5138,12 +5220,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 }
                 item.setVisible(realmInItem);
             });
-            // console.timeEnd("update available");
+            //console.timeEnd("update available");
         };
 
         // -----------------------------------------------------------------
 
-        this.addDatasetToCatalogTree = function (r, catalogRoot) {
+        this.addDatasetToCatalogTree = function(r, catalogRoot) {
+
             var realm = r.get('realm'),
                 dimension = r.get('group_by'),
                 metric = r.get('metric'),
@@ -5156,12 +5239,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     XDMoD.Module.MetricExplorer.getCategoryForRealm(realm)
                 ),
                 datasetNodeText = dimension != 'none' ?
-                'by ' + this.realms[realm].dimensions[dimension].text :
+                'by ' + this.realms[realm]['dimensions'][dimension].text :
                 'Summary';
 
-            categoryNode.expand(false, false, function () {
+            categoryNode.expand(false, false, function() {
                 var metricNode = categoryNode.findChild('id', metricNodeId);
-                metricNode.expand(false, false, function () {
+                metricNode.expand(false, false, function() {
                     var datasetNode = {
                         type: 'dataset',
                         id: r.get('id'),
@@ -5172,7 +5255,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         listeners: {
                             click: {
                                 scope: this,
-                                fn: function (n) {
+                                fn: function(n) {
                                     XDMoD.Module.MetricExplorer.seriesContextMenu(null, false, n.id, undefined, this);
                                 }
                             }
@@ -5185,23 +5268,24 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // -----------------------------------------------------------------
 
-        this.dataCatalogTreeOnDatasetAdd = function (records, index) {
-            // console.log('this.dataCatalogTreeOnDatasetAdd');
+        this.dataCatalogTreeOnDatasetAdd = function(records, index) {
+            //console.log('this.dataCatalogTreeOnDatasetAdd');
             var catalogRoot = this.dataCatalogTree.getRootNode();
 
-            Ext.each(records, function (r, i, recs) {
+            Ext.each(records, function(r, i, recs) {
                 this.addDatasetToCatalogTree.call(this, r, catalogRoot);
                 // JMS: update the filter list to include filters for this dataset:
-                // this.updateAvailableFilterList(r);
+                //this.updateAvailableFilterList(r);
             }, this);
 
             // JMS: update the filter list:
             this.updateAvailableFilterList();
+
         }; // dataCatalogTreeOnDatasetAdd()
 
         // -----------------------------------------------------------------
 
-        this.dataCatalogTreeOnDatasetRemove = function (record) {
+        this.dataCatalogTreeOnDatasetRemove = function(record) {
             var recId = record.get('id'),
                 catalogRoot = this.dataCatalogTree.getRootNode(),
                 datasetNode = catalogRoot.findChild('id', recId, true);
@@ -5231,13 +5315,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             plugins: new Ext.ux.collapsedPanelTitlePlugin('Metric Catalog'),
             items: [this.dataCatalogTree],
             listeners: {
-                collapse: function (/* p*/) {},
-                expand: function (p) {
+                collapse: function( /*p*/ ) {},
+                expand: function(p) {
                     if (p.pinned) {
-                        p.getTool('pin').hide();
+                        p.getTool('pin').hide()
                         p.getTool('unpin').show();
                     } else {
-                        p.getTool('pin').show();
+                        p.getTool('pin').show()
                         p.getTool('unpin').hide();
                     }
                 }
@@ -5246,7 +5330,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 id: 'pin',
                 qtip: 'Prevent auto hiding of Metric Catalog',
                 hidden: false,
-                handler: function (ev, toolEl, p /* , tc*/) {
+                handler: function(ev, toolEl, p /*, tc*/ ) {
                     p.pinned = true;
                     if (p.collapsed) {
                         p.expand(false);
@@ -5258,13 +5342,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 id: 'unpin',
                 qtip: 'Allow auto hiding of Metric Catalog',
                 hidden: true,
-                handler: function (ev, toolEl, p /* , tc*/) {
+                handler: function(ev, toolEl, p /*, tc*/ ) {
                     p.pinned = false;
                     p.getTool('pin').show();
                     p.getTool('unpin').hide();
                 }
             }]
-        }); // leftPanel
+        }); //leftPanel
 
         // ---------------------------------------------------------
 
@@ -5300,7 +5384,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 method: 'POST',
                 url: 'controllers/metric_explorer.php'
             })
-        }); // chartStore
+        }); //chartStore
 
         // ---------------------------------------------------------
 
@@ -5340,7 +5424,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             chartStore.baseParams.controller_module = self.getReportCheckbox().getModule();
         }
 
-        chartStore.on('beforeload', function () {
+        chartStore.on('beforeload', function() {
+
             if (!this.getDurationSelector().validate()) {
                 return;
             }
@@ -5349,11 +5434,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             highChartPanel.un('resize', onResize, this);
 
             initBaseParams.call(this);
-        }, this); // chartStore.on('beforeload', ...
+
+        }, this); //chartStore.on('beforeload', ...
 
         // ---------------------------------------------------------
 
-        chartStore.on('load', function (chartStore) {
+        chartStore.on('load', function(chartStore) {
+
             this.firstChange = true;
 
             if (chartStore.getCount() != 1) {
@@ -5388,7 +5475,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             var has_title = reportGeneratorMeta.title && reportGeneratorMeta.title.length > 0;
             self.setExportDefaults(has_title);
 
-            highChartPanel.on('resize', onResize, this); // re-register this after loading/its unregistered beforeload
+            highChartPanel.on('resize', onResize, this); //re-register this after loading/its unregistered beforeload
 
             this.chartPagingToolbar.setPagingEnabled(!this.show_remainder);
 
@@ -5405,12 +5492,15 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             }
 
             this.unmask();
-        }, this); // chartStore.on('load', ...
+
+        }, this); //chartStore.on('load', ...
 
         // ---------------------------------------------------------
 
-        chartStore.on('exception', function (thisProxy, type, action, options, response, arg) {
+        chartStore.on('exception', function(thisProxy, type, action, options, response, arg) {
+
             if (type === 'response') {
+
                 var data = CCR.safelyDecodeJSONResponse(response) || {};
 
                 var errorCode = data.code;
@@ -5460,13 +5550,14 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             this.chartViewPanel.getLayout().setActiveItem(this.highChartPanel.getId());
 
             this.unmask();
-        }, this); // chartStore.on('exception', ...
+
+        }, this); //chartStore.on('exception', ...
 
         // ---------------------------------------------------------
 
-        this.reloadChartFunc = function () {
+        this.reloadChartFunc = function() {
             chartStore.load({
-                callback: function () {
+                callback: function() {
                     this.queriesGridPanel.view.refresh();
                 },
                 scope: this
@@ -5475,11 +5566,11 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         var reloadChartTask = new Ext.util.DelayedTask(this.reloadChartFunc, this);
 
-        this.reloadChart = function (delay) {
+        this.reloadChart = function(delay) {
             reloadChartTask.delay(delay || XDMoD.Module.MetricExplorer.delays.medium);
         };
 
-        this.saveQuery = function (commitChanges) {
+        this.saveQuery = function(commitChanges) {
             if (this.disableSave || this.disableSave === true) {
                 return;
             }
@@ -5507,7 +5598,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             value: this.chartDefaultPageSize,
             listeners: {
                 scope: this,
-                change: function (t, newValue, oldValue) {
+                'change': function(t, newValue, oldValue) {
                     if (t.isValid(false) && newValue != t.ownerCt.pageSize) {
                         XDMoD.TrackEvent('Metric Explorer', 'Changed page limit', newValue);
 
@@ -5515,20 +5606,20 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                         this.saveQuery();
                         t.ownerCt.doRefresh();
                     }
-                }, // change
-                specialkey: function (t, e) {
-                    if (t.isValid(false) && e.getKey() == e.ENTER) {
-                        XDMoD.TrackEvent('Metric Explorer', 'Changed page limit', t.getValue());
+                }, //change
+                'specialkey': function(t, e) {
+                        if (t.isValid(false) && e.getKey() == e.ENTER) {
+                            XDMoD.TrackEvent('Metric Explorer', 'Changed page limit', t.getValue());
 
-                        t.ownerCt.pageSize = t.getValue();
+                            t.ownerCt.pageSize = t.getValue();
 
-                        this.saveQuery();
+                            this.saveQuery();
 
-                        t.ownerCt.doRefresh();
-                    }
-                } // specialkey
-            } // listeners
-        }); // this.chartPageSizeField
+                            t.ownerCt.doRefresh();
+                        }
+                    } //specialkey
+            } //listeners
+        }); //this.chartPageSizeField
 
         // ---------------------------------------------------------
         var viewer = CCR.xdmod.ui.Viewer.getViewer(),
@@ -5539,7 +5630,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             showSeparator: false,
             items: this.queriesGridPanel,
             width: 500,
-            renderTo: document.body // pre renders panel that doesnt show on first load.
+            renderTo: document.body //pre renders panel that doesnt show on first load.
         });
         this.queriesButton = new Ext.Button({
             text: 'Load Chart',
@@ -5592,7 +5683,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
              * @return the result of calling the handler function w/ the
              *                    provided event and menu.
              */
-            this.chartOptionsMenu.keyNav.doRelay = function (e, h) {
+            this.chartOptionsMenu.keyNav.doRelay = function(e, h) {
                 var k = e.getKey();
 
                 if (this.menu.activeItem && this.menu.activeItem.isFormField && k != e.TAB) {
@@ -5620,7 +5711,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
              *                             handled
              * @param  {Ext.Menu} m the menu from which the event was generated
              */
-            this.chartOptionsMenu.keyNav.down = function (e /* , m*/) {
+            this.chartOptionsMenu.keyNav.down = function(e /*, m*/ ) {
+
                 var key = e.getKey();
                 var target = e.target;
 
@@ -5644,7 +5736,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             icon: '../gui/images/arrow_undo.png',
             tooltip: 'Undo the previous action',
             disabled: true,
-            handler: function () {
+            handler: function() {
                 self.currentQueryRecord.stack.undo();
             }
         });
@@ -5656,7 +5748,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             icon: '../gui/images/arrow_redo.png',
             tooltip: 'Revert the most recent undo',
             disabled: true,
-            handler: function () {
+            handler: function() {
                 self.currentQueryRecord.stack.redo();
             }
         });
@@ -5688,7 +5780,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             tooltip: 'Display the list of global filters that have been applied to the currently selected chart',
             menu: this.chartFiltersMenu
         });
-        viewer.on('resize', function (t) {
+        viewer.on('resize', function(t) {
             var w = t.getWidth();
             if (w > datasetsMenuDefaultWidth) {
                 w = datasetsMenuDefaultWidth;
@@ -5718,27 +5810,28 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 'Data Series'
             ],
 
-            updateInfo: function () {
-                if (this.displayItem) {
-                    var count = this.store.getCount();
-                    var msg;
-                    if (count > 0) {
-                        msg = String.format(
+            updateInfo: function() {
+
+                    if (this.displayItem) {
+                        var count = this.store.getCount();
+                        var msg;
+                        if (count > 0) {
+                            msg = String.format(
                                 this.displayMsg,
                                 this.cursor + 1, Math.min(this.store.getTotalCount(), this.cursor + this.pageSize), this.store.getTotalCount()
                             );
-                    }
-                    this.displayItem.setText(msg);
-                } // if(this.displayItem)
-            } // updateInfo
-        }); // this.chartPagingToolbar
+                        }
+                        this.displayItem.setText(msg);
+                    } //if(this.displayItem)
+                } //updateInfo
+        }); //this.chartPagingToolbar
 
         // ---------------------------------------------------------
 
         this.firstChange = true;
 
-        this.chartPagingToolbar.on('afterlayout', function () {
-            this.chartPagingToolbar.on('change', function (total, pageObj) {
+        this.chartPagingToolbar.on('afterlayout', function() {
+            this.chartPagingToolbar.on('change', function(total, pageObj) {
                 XDMoD.TrackEvent('Metric Explorer', 'Loaded page of data', pageObj.activePage + ' of ' + pageObj.pages);
 
                 if (this.firstChange) {
@@ -5762,22 +5855,22 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             listeners: {
                 afterrender: {
                     scope: self,
-                    fn: function (comp) {
+                    fn: function(comp) {
                         var element = comp.getEl();
-                        element.on('click', function () {
+                        element.on('click', function() {
                             XDMoD.Module.MetricExplorer.chartContextMenu(null, true, self);
                         });
                     }
                 } // afterrender
             } // listeners
-        }); // assistPanel
+        }); //assistPanel
 
         // ---------------------------------------------------------
 
         var highChartPanel = new CCR.xdmod.ui.HighChartPanel({
             id: 'hc-panel' + this.id,
             store: chartStore
-        }); // assistPanel
+        }); //assistPanel
 
         this.highChartPanel = highChartPanel;
 
@@ -5788,7 +5881,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         });
         this.quickFilterButton = quickFilterButton;
 
-        var relayQuickFilterUpdateToGlobalFilters = function (quickFilterStore, quickFilterRecord) {
+        var relayQuickFilterUpdateToGlobalFilters = function(quickFilterStore, quickFilterRecord) {
             var dimensionId = quickFilterRecord.get('dimensionId');
             var valueId = quickFilterRecord.get('valueId');
             var filterId = dimensionId + '=' + valueId;
@@ -5821,9 +5914,9 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         };
         quickFilterButton.quickFilterStore.on('update', relayQuickFilterUpdateToGlobalFilters, this);
 
-        var updateQuickFilters = function () {
+        var updateQuickFilters = function() {
             quickFilterButton.quickFilterStore.un('update', relayQuickFilterUpdateToGlobalFilters, this);
-            quickFilterButton.quickFilterStore.each(function (quickFilterRecord) {
+            quickFilterButton.quickFilterStore.each(function(quickFilterRecord) {
                 var dimensionId = quickFilterRecord.get('dimensionId');
                 var valueId = quickFilterRecord.get('valueId');
                 var filterId = dimensionId + '=' + valueId;
@@ -5887,7 +5980,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 highChartPanel,
                 assistPanel
             ]
-        }); // chartViewPanel
+        }); //chartViewPanel
 
         // ---------------------------------------------------------
 
@@ -5915,9 +6008,10 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             '</td>',
             '</tr>',
             '</table>'
-        ); // commentsTemplate
+        ); //commentsTemplate
 
         function updateDescription(chartStore) {
+
             var dimsDesc = '<ul>';
             var metricsDesc = '<ul>';
 
@@ -5926,7 +6020,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     var md = chartStore.getAt(i).get('dimensions');
                     for (var d in md) {
                         if (md.hasOwnProperty(d)) {
-                            dimsDesc += '<li><b>' + d + ':</b> ' + md[d] + '</li>\n';
+                            dimsDesc += "<li><b>" + d + ":</b> " + md[d] + "</li>\n";
                         }
                     }
                 }
@@ -5935,20 +6029,21 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                     var md2 = chartStore.getAt(k).get('metrics');
                     for (var e in md2) {
                         if (md2.hasOwnProperty(e)) {
-                            metricsDesc += '<li><b>' + e + ':</b> ' + md2[e] + '</li>\n';
+                            metricsDesc += "<li><b>" + e + ":</b> " + md2[e] + "</li>\n";
                         }
                     }
                 }
             }
 
-            dimsDesc += '</ul>\n';
+            dimsDesc += "</ul>\n";
             metricsDesc += '</ul>';
 
             commentsTemplate.overwrite(descriptionPanel.body, {
-                comments: dimsDesc + metricsDesc,
-                subnotes: ''
+                'comments': dimsDesc + metricsDesc,
+                'subnotes': ""
             });
-        } // updateDescription
+
+        } //updateDescription
 
         // ---------------------------------------------------------
 
@@ -5965,11 +6060,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             usePaging: true,
             lockingView: false
 
-        }); // viewGrid
+        }); //viewGrid
 
         // ---------------------------------------------------------
 
-        var reloadViewGridFunc = function () {
+        var reloadViewGridFunc = function() {
+
             viewGrid.store.baseParams = {};
             Ext.apply(viewGrid.store.baseParams, getBaseParams.call(this));
 
@@ -5978,14 +6074,17 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             viewGrid.store.baseParams.limit = viewGrid.bottomToolbar.pageSize;
             viewGrid.store.baseParams.format = 'jsonstore';
             viewGrid.store.load();
-        }; // reloadViewGridFunc
+
+        }; //reloadViewGridFunc
 
         // ---------------------------------------------------------
 
         var reloadViewTask = new Ext.util.DelayedTask(reloadViewGridFunc, this);
 
-        this.reloadViewGrid = function (delay) {
+        this.reloadViewGrid = function(delay) {
+
             reloadViewTask.delay(delay || 2300);
+
         };
 
         // ---------------------------------------------------------
@@ -5998,22 +6097,23 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             border: false,
             items: [this.chartViewPanel, descriptionPanel]
 
-        }); // view
+        }); //view
 
         // ---------------------------------------------------------
 
-        self.on('print_clicked', function () {
+        self.on('print_clicked', function() {
+
             initBaseParams.call(self);
             var parameters = chartStore.baseParams;
 
-            parameters.operation = 'get_data';
-            parameters.scale = 1; // CCR.xdmod.ui.hd1280Scale;
-            parameters.format = 'png';
-            parameters.start = this.chartPagingToolbar.cursor;
-            parameters.limit = this.chartPagingToolbar.pageSize;
-            parameters.width = 757 * 2;
-            parameters.height = 400 * 2;
-            parameters.show_title = 'y';
+            parameters['operation'] = 'get_data';
+            parameters['scale'] = 1; //CCR.xdmod.ui.hd1280Scale;
+            parameters['format'] = 'png';
+            parameters['start'] = this.chartPagingToolbar.cursor;
+            parameters['limit'] = this.chartPagingToolbar.pageSize;
+            parameters['width'] = 757 * 2;
+            parameters['height'] = 400 * 2;
+            parameters['show_title'] = 'y';
 
             var params = '';
 
@@ -6027,35 +6127,38 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
             Ext.ux.Printer.print({
 
-                getXTypes: function () {
+                getXTypes: function() {
                     return 'html';
                 },
                 html: '<img src="/controllers/metric_explorer.php?' + params + '" />'
 
             });
-        }); // self.on('print_clicked', ...
+
+        }); //self.on('print_clicked', ...
 
         // ---------------------------------------------------------
 
-        self.on('export_option_selected', function (opts) {
+        self.on('export_option_selected', function(opts) {
+
             initBaseParams.call(self);
             var parameters = chartStore.baseParams;
 
             Ext.apply(parameters, opts);
 
-            CCR.invokePost('controllers/metric_explorer.php', parameters);
-        }); // self.on('export_option_selected', ...
+            CCR.invokePost("controllers/metric_explorer.php", parameters);
+
+        }); //self.on('export_option_selected', ...
 
         // ---------------------------------------------------------
 
-        this.loadAll = function () {
-            this.queries_store_loaded_handler = function () {
+        this.loadAll = function() {
+            this.queries_store_loaded_handler = function() {
                 this.createQueryFunc.call(this, null, null, null, null, null, null, false);
                 this.reloadChart.call(this);
                 this.maximizeScale.call(this);
             };
 
-            this.dwdesc_loaded_handler = function () {
+            this.dwdesc_loaded_handler = function() {
                 this.queriesStore.on('load', this.queries_store_loaded_handler, this);
                 this.queriesStore.load();
             };
@@ -6063,7 +6166,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             this.on('dwdesc_loaded', this.dwdesc_loaded_handler, this);
 
             this.dwDescriptionStore.load();
-        }; // loadAll
+        }; //loadAll
 
         this.on('afterrender', this.loadAll, this, {
             single: true
@@ -6071,30 +6174,32 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         // ---------------------------------------------------------
 
-        this.maximizeScale = function () {
+        this.maximizeScale = function() {
+
             chartWidth = this.chartViewPanel ? this.chartViewPanel.getWidth() : chartWidth;
             chartHeight = this.chartViewPanel ? this.chartViewPanel.getHeight() - (this.chartViewPanel.tbar ? this.chartViewPanel.tbar.getHeight() : 0) : chartHeight;
-        }; // maximizeScale
+
+        }; //maximizeScale
 
         // ---------------------------------------------------------
 
-        function onResize(/* t*/) {
+        function onResize( /*t*/ ) {
             this.maximizeScale.call(this);
-        } // onResize
+        } //onResize
 
         // ---------------------------------------------------------
 
         Ext.apply(this, {
             items: [leftPanel, view]
-        }); // Ext.apply
+        }); //Ext.apply
 
         XDMoD.Module.MetricExplorer.superclass.initComponent.apply(this, arguments);
 
-        this.addEvents('dwdesc_loaded');
+        this.addEvents("dwdesc_loaded");
         var durationToolbar = this.getDurationSelector();
         var origRefreshOnHandle = durationToolbar.refreshButton.handler;
-        durationToolbar.refreshButton.handler = function () {
-            var changed = function (component) {
+        durationToolbar.refreshButton.handler = function() {
+            var changed = function(component) {
                 if (CCR.exists(component)) {
                     if (CCR.isType(component.didChange, CCR.Types.Function)) {
                         return component.didChange();
@@ -6110,56 +6215,56 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
                 origRefreshOnHandle.call(durationToolbar);
             }
         };
-    }, // initComponent
+    }, //initComponent
 
     listeners: {
-        activate: function (/* panel*/) {
+        activate: function( /*panel*/ ) {
             this.updateRawDataWindowVisibility();
         }, // activate
 
-        deactivate: function (/* panel*/) {
+        deactivate: function( /*panel*/ ) {
             this.updateRawDataWindowVisibility(false);
         }, // deactivate
 
-        save_changes: function () {
+        save_changes: function() {
             this.saveQueryFunc(true);
         }, // save_changes
 
-        discard_changes: function () {
+        discard_changes: function() {
             this.currentQueryRecord.stack.revertToMarked();
         }, // discard_changes
 
-        disable_commit: function () {
+        disable_commit: function() {
             this.currentQueryRecord.stack.disableAutocommit();
         },
 
-        enable_commit: function (keepChanges) {
+        enable_commit: function(keepChanges) {
             if (keepChanges) {
                 this.currentQueryRecord.stack.commit();
             }
             this.currentQueryRecord.stack.enableAutocommit();
         },
 
-        enable_pie: function () {
+        enable_pie: function() {
             this.addDatasetButton.enable();
             this.dataCatalogTree.enable();
             this.showRemainderCheckbox.enable();
         }, // enable_pie
 
-        disable_pie: function () {
+        disable_pie: function() {
             this.addDatasetButton.disable();
             this.dataCatalogTree.disable();
             this.showRemainderCheckbox.disable();
         }, // disable_pie
 
-        invalid_chart_display_type: function (msg) {
+        invalid_chart_display_type: function(msg) {
             CCR.error('Invalid Chart Display Type', msg);
         }
 
     }, // listeners
 
-    _simpleSilentSetValue: function (component, value) {
-        this._noEvents(component, function (component, value) {
+    _simpleSilentSetValue: function(component, value) {
+        this._noEvents(component, function(component, value) {
             component.setValue(value);
         }, value);
     },
@@ -6174,7 +6279,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @param {string} action     the reason for the chart change
      *
      */
-    handleChartModification: function (changeStack, chartData, action) {
+    handleChartModification: function(changeStack, chartData, action) {
+
         switch (action) {
             case 'undo':
             case 'redo':
@@ -6213,12 +6319,12 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @param {Function} fn
      * @private
      */
-    _noEvents: function (components, fn) {
+    _noEvents: function(components, fn) {
         var args;
         if (CCR.isType(components, CCR.Types.Array)) {
             this._map(components, 'suspendEvents');
 
-            args = this._filterObject(arguments, function (value, index) {
+            args = this._filterObject(arguments, function(value, index) {
                 return index > 1;
             });
             args = args.concat(components);
@@ -6226,9 +6332,10 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
             fn.apply(this, args);
 
             this._map(components, 'resumeEvents');
+
         } else if (CCR.isType(components, CCR.Types.Object)) {
             components.suspendEvents();
-            args = this._filterObject(arguments, function (value, index) {
+            args = this._filterObject(arguments, function(value, index) {
                 return index > 1;
             });
             args = [components].concat(args);
@@ -6245,7 +6352,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @return {Object|Array}
      * @private
      */
-    _filterObject: function (object, filters, as_array) {
+    _filterObject: function(object, filters, as_array) {
         as_array = as_array || true;
 
         var result = as_array ? [] : {};
@@ -6282,7 +6389,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @return {String|Number|null}
      * @private
      */
-    _applyFilters: function (filters, value, index) {
+    _applyFilters: function(filters, value, index) {
         var result = value;
         var passes;
         if (CCR.isType(filters, CCR.Types.Array)) {
@@ -6310,7 +6417,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @param {String} fn_name
      * @private
      */
-    _map: function (objects, fn_name) {
+    _map: function(objects, fn_name) {
         if (CCR.isType(objects, CCR.Types.Array)) {
             for (var i = 0; i < objects.length; i++) {
                 var item = objects[i];
@@ -6329,7 +6436,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @returns {Array}
      * @private
      */
-    _getDisplayTypes: function (enabled, ignore_indexes, include_indexes) {
+    _getDisplayTypes: function(enabled, ignore_indexes, include_indexes) {
         var self = this;
         enabled = enabled || false;
         ignore_indexes = ignore_indexes || [];
@@ -6339,7 +6446,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         if (!enabled) {
             data = this.datasetStore.getRange(0, this.datasetStore.getTotalCount());
         } else {
-            this.datasetStore.each(function (record) {
+            this.datasetStore.each(function(record) {
                 var index = self.datasetStore.find('id', record.id);
                 var enabled = record.get('enabled');
                 var ignoreIndex = ignore_indexes.indexOf(index) >= 0;
@@ -6368,7 +6475,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      * @param {boolean} [isAggregate=this.isAggregate()]
      * @returns {boolean}
      */
-    validateChart: function (displayTypes, additionalDataSets, isAggregate) {
+    validateChart: function(displayTypes, additionalDataSets, isAggregate) {
         displayTypes = displayTypes || [];
         additionalDataSets = additionalDataSets || 0;
 
@@ -6379,6 +6486,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         var reasons = [];
         if (isPie && !isAggregate) {
+
             reasons.push(
                 'You cannot display timeseries data in a pie chart.' +
                 '<br/> Please change the dataset or display type.<br/>'
@@ -6386,6 +6494,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         }
 
         if (isPie && datasetsEnabled > 1) {
+
             reasons.push(
                 'Cannot display more than one dataset in pie format <br/>' +
                 'Please disable datasets such that there is only one enabled.<br/>'
@@ -6412,7 +6521,8 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return true;
     },
 
-    validateChartType: function (config) {
+    validateChartType: function(config) {
+
         var datasetsEnabled = this.datasetsEnabled();
 
         var displayTypes = this.getDisplayTypes(datasetsEnabled, config);
@@ -6434,7 +6544,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return valid;
     },
 
-    getDisplayTypes: function (datasetsEnabled, config) {
+    getDisplayTypes: function(datasetsEnabled, config) {
         var record = this.currentQueryRecord || {};
         record.data = record.data || {};
         record.data.config = record.data.config || {};
@@ -6452,13 +6562,13 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return displayTypes;
     },
 
-    isPie: function (displayTypes, datasetsEnabled, config) {
+    isPie: function(displayTypes, datasetsEnabled, config) {
         displayTypes = displayTypes || this.getDisplayTypes(datasetsEnabled, config);
 
         return displayTypes.indexOf('pie') >= 0;
     },
 
-    isAggregate: function () {
+    isAggregate: function() {
         var value = CCR.xdmod.ui.metricExplorer && CCR.xdmod.ui.metricExplorer.timeseries || false;
         return !value;
     },
@@ -6468,20 +6578,20 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
      *
      * @return {Boolean} True if trend lines can be displayed. Otherwise, false.
      */
-    isTrendLineAvailable: function () {
+    isTrendLineAvailable: function() {
         return !this.isAggregate();
     },
 
     /**
      * Set trend line components to the appropriate configuration.
      */
-    syncTrendLineComponents: function () {
+    syncTrendLineComponents: function() {
         var trendLineAvailable = this.isTrendLineAvailable();
 
         this.trendLineCheckbox.setDisabled(!trendLineAvailable);
     },
 
-    datasetsEnabled: function () {
+    datasetsEnabled: function() {
         var count = 0;
         var metricExplorer = CCR.xdmod.ui.metricExplorer;
         var data = metricExplorer && metricExplorer.datasetStore ? metricExplorer.datasetStore : null;
@@ -6495,7 +6605,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return count;
     },
 
-    getCurrentRecord: function () {
+    getCurrentRecord: function() {
         var sm = this.queriesGridPanel.getSelectionModel();
 
         var selected = this.currentQueryRecord;
@@ -6510,7 +6620,7 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
         return selected;
     },
 
-    selectRowByIndex: function (index) {
+    selectRowByIndex: function(index) {
         var sm = this.queriesGridPanel.getSelectionModel();
         this.queriesGridPanelSM.un('rowselect', this.queriesGridPanelSMRowSelect, this);
         sm.selectRow(index);
@@ -6520,4 +6630,4 @@ Ext.extend(XDMoD.Module.MetricExplorer, XDMoD.PortalModule, {
 
         view.focusRow(index);
     }
-}); // XDMoD.Module.MetricExplorer
+}); //XDMoD.Module.MetricExplorer
