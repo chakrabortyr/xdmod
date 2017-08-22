@@ -112,7 +112,7 @@
       <meta name="keywords" content="<?php print $meta_keywords; ?>">
 
       <title><?php print $page_title; ?></title>
-      
+
       <link rel="shortcut icon" href="gui/icons/favicon_static.ico" />
       <script type="text/javascript" src="gui/lib/oldie-console-patch.js"></script>
       <?php if (!$userLoggedIn): ?>
@@ -542,6 +542,8 @@
                   profileEditor.init();
 
                }).defer(1000);
+
+            };
 
          <?php } ?>
          <?php endif; ?>
