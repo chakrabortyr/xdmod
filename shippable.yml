@@ -22,5 +22,6 @@ build:
         - cp -f /etc/xdmod/portal_settings.ini ./configuration/portal_settings.ini
         - ./open_xdmod/modules/xdmod/component_tests/runtests.sh --log-junit `pwd`/shippable/testresults/componentresults.xml
         - mv ./configuration/portal_settings.ini.old ./configuration/portal_settings.ini
+        - cp /etc/xdmod/simplesamlphp/* ./configuration/
     on_failure:
         - cat /var/log/xdmod/*
