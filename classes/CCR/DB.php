@@ -103,7 +103,7 @@ class DB
         // All database interfaces must implement iDatabase
 
         if ( ! $db instanceof iDatabase ) {
-            throw new Exception("$engine does not implenment interface iDatabase");
+            throw new Exception("$engine does not implement interface iDatabase");
         }
 
         self::$instancePool[$sectionName] = $db;

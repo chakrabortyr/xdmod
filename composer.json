@@ -406,7 +406,8 @@
     },
     "scripts": {
         "post-install-cmd": "Xdmod\\ComposerScripts::postInstall",
-        "post-update-cmd": "Xdmod\\ComposerScripts::postUpdate"
+        "post-update-cmd": "Xdmod\\ComposerScripts::postUpdate",
+        "start": "php -S localhost:8080 -t html html/index.php --timeout=0"
     },
     "autoload": {
         "classmap": [
