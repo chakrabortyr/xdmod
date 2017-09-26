@@ -402,12 +402,13 @@
         "platform": {
             "php": "5.3.3"
         },
-        "secure-http": false
+        "secure-http": false,
+        "process-timeout": 1200
     },
     "scripts": {
         "post-install-cmd": "Xdmod\\ComposerScripts::postInstall",
         "post-update-cmd": "Xdmod\\ComposerScripts::postUpdate",
-        "start": "php -S localhost:8080 -t html html/index.php --timeout=0"
+        "start": "php -S localhost:8080 -t html html/index.php"
     },
     "autoload": {
         "classmap": [
