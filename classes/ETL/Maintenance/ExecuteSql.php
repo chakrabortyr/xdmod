@@ -9,15 +9,15 @@
 
 namespace ETL\Maintenance;
 
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
 use ETL\aOptions;
 use ETL\iAction;
 use ETL\aAction;
 use ETL\DataEndpoint\iRdbmsEndpoint;
-use PDOException;
+use \PDOException;
 use ETL\Utilities;
-use Log;
+use \Log;
 
 use PHPSQLParser\PHPSQLParser;
 use PHPSQLParser\PHPSQLCreator;
@@ -95,7 +95,6 @@ class ExecuteSql extends aAction implements iAction
                 $sqlFile = $this->options->applyBasePath("paths->sql_dir", $sqlFile);
             }
         }
-        unset($sqlFile); // Sever the reference with the last element
 
         $this->options->sql_file_list = $sqlFileList;
 
@@ -146,26 +145,6 @@ class ExecuteSql extends aAction implements iAction
         return true;
 
     }  // initialize()
-
-    /** -----------------------------------------------------------------------------------------
-     * @see aAction::performPreExecuteTasks()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    protected function performPreExecuteTasks()
-    {
-        return true;
-    } // performPreExecuteTasks()
-
-    /** -----------------------------------------------------------------------------------------
-     * @see aAction::performPostExecuteTasks()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    protected function performPostExecuteTasks($numRecordsProcessed = null)
-    {
-        return true;
-    }  // performPostExecuteTasks()
 
     /* ------------------------------------------------------------------------------------------
      * @see iAction::execute()
@@ -220,10 +199,12 @@ class ExecuteSql extends aAction implements iAction
                 // Remove comments from the SQL before executing for clarity.
 
                 $commentPatterns = array(
+                    // Inline or multi-line C-style comments. The U (ungreedy) is needed!
+                    '/\/\*(.|[\r\n])*\*\//U',
                     // Hash-style comments
-                    '/^\s*#.*[\r\n]+/',
+                    '/#.*[\r\n]+/',
                     // Standard SQL comments.
-                    '/^\s*-- ?.*[\r\n]+/'
+                    '/-- ?.*[\r\n]+/'
                     );
                 $sql = preg_replace($commentPatterns, "", $sql);
 
@@ -244,7 +225,7 @@ class ExecuteSql extends aAction implements iAction
                 } catch ( PDOException $e ) {
                     $this->logAndThrowException(
                         "Error executing SQL",
-                        array('exception' => $e, 'sql' => $sql, 'endpoint' => $this->sourceEndpoint)
+                        array('exception' => $e, 'sql' => $this->sqlQueryString, 'endpoint' => $this->sourceEndpoint)
                     );
                 }
 

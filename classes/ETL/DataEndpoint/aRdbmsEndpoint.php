@@ -13,8 +13,8 @@ namespace ETL\DataEndpoint;
 
 use ETL\DataEndpoint\DataEndpointOptions;
 use CCR\DB;
-use Log;
-use xd_utilities;
+use \Log;
+use \xd_utilities;
 use Exception;
 use PDOException;
 
@@ -211,7 +211,6 @@ AND table_name = :tablename";
             $schemaName = $this->getSchema();
         }
 
-        $result = null;
         $params = array(
             ":schema" => $schemaName,
             ":tablename"  => $tableName
@@ -225,7 +224,7 @@ AND table_name = :tablename";
             }
         } catch (PDOException $e) {
             $this->logAndThrowException(
-                "Error querying for table '$schemaName'.'$tableName':",
+                "Error querying for table '$schema'.'$tableName':",
                 array('exception' => $e, 'sql' => $sql, 'endpoint' => $this)
             );
         }
@@ -259,7 +258,6 @@ ORDER BY ordinal_position ASC";
 
         $params = array(":schema" => $schemaName,
                         ":tablename"  => $tableName);
-        $result = null;
 
         try {
             $dbh = $this->getHandle();
@@ -341,18 +339,4 @@ ORDER BY ordinal_position ASC";
             (null !== $this->username ? ", user={$this->username}" : "" ) .
             ")";
     }  // __toString()
-
-    /* ------------------------------------------------------------------------------------------
-     * @see iRdbmsEndpoint::schemaExists()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    abstract public function schemaExists($schemaName = null);
-
-    /* ------------------------------------------------------------------------------------------
-     * @see iRdbmsEndpoint::createSchema()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    abstract public function createSchema($schemaName = null);
 }  // class aRdbmsEndpoint

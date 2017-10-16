@@ -201,6 +201,8 @@ if (isset($_POST['direct_to'])) {
   <script type="text/javascript" src="../gui/js/ExportPanel.js"></script>
   <script type="text/javascript" src="../gui/js/PortalModule.js"></script>
 
+  <script type="text/javascript" src="js/Ingestion/ReportsPanel.js"></script>
+
   <script type="text/javascript" src="js/Dashboard/Factory.js"></script>
   <script type="text/javascript" src="js/Dashboard/MenuStore.js"></script>
   <script type="text/javascript" src="js/Dashboard/FramePanel.js"></script>

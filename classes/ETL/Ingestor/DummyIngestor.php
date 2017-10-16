@@ -13,10 +13,8 @@ namespace ETL\Ingestor;
 
 use ETL\aOptions;
 use ETL\iAction;
-use ETL\aAction;
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
-
 use Log;
 
 class DummyIngestor extends aAction implements iAction
@@ -34,16 +32,6 @@ class DummyIngestor extends aAction implements iAction
     public function initialize(EtlOverseerOptions $etlOverseerOptions = null)
     {
         parent::initialize($etlOverseerOptions);
-        return true;
-    }
-
-    protected function performPreExecuteTasks()
-    {
-        return true;
-    }
-
-    protected function performPostExecuteTasks($numRecordsProcessed = null)
-    {
         return true;
     }
 }  // class DummyIngestor

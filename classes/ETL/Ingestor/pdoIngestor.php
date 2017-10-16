@@ -46,137 +46,69 @@ use ETL\aOptions;
 use ETL\aRdbmsDestinationAction;
 use ETL\DataEndpoint\iRdbmsEndpoint;
 use ETL\DataEndpoint\Mysql;
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
 use ETL\Utilities;
-use ETL\DbModel\Query;
+use ETL\DbEntity\Query;
 
 use CCR\DB\MySQLHelper;
 use PDOException;
-use Exception;
 use PDO;
 use Log;
 
 class pdoIngestor extends aIngestor
 {
-
-    /** -----------------------------------------------------------------------------------------
-     * Maximum number of times to attempt to execute the source query
-     *
-     * @var int
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // Maximum number of times to attempt to execute the source query
     const MAX_QUERY_ATTEMPTS = 3;
 
-    /** -----------------------------------------------------------------------------------------
-     * Write a log message after processing this many source records
-     *
-     * @var int
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // Write a log message after processing this many source records
     const NUM_RECORDS_PER_LOG_MSG = 100000;
 
-    /** -----------------------------------------------------------------------------------------
-     * Maximum number of records to import in one LOAD DATA IN FILE
-     *
-     * @var int
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // Maximum number of records to import at once
     const MAX_RECORDS_PER_INFILE = 250000;
 
-    /** -----------------------------------------------------------------------------------------
-     * The number of records per load file to use when calculating the database write timeout
-     *
-     * @var int
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // The number of records per load file to use when calculating the write timeout
     const NET_WRITE_TIMEOUT_RECORD_CHUNK = 250000;
 
-    /** -----------------------------------------------------------------------------------------
-     * The number of seconds to allot for the timeout per file per record chunk
-     *
-     * @var int
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // The number of seconds to allot per file per record chunk
     const NET_WRITE_TIMEOUT_SECONDS_PER_FILE_CHUNK = 60;
 
-    /** -----------------------------------------------------------------------------------------
-     * Query used for extracting data from the source endpoint.
-     *
-     * @var string | null
-     * ------------------------------------------------------------------------------------------
-     */
+    // ------------------------------------------------------------------------------------------
 
+    // An 2-dimensional associative array where the keys are ETL table definition keys and the
+    // values are a mapping between ETL table columns (keys) and source query columns (values).
+    protected $destinationFieldMappings = array();
+
+    // Set to TRUE to indicate a destination field mapping was not specified in the configuration
+    // file and was auto-generated using all source query columns.  This can be used for
+    // optimizations later.
+    protected $fullSourceToDestinationMapping = false;
+
+    // Query for extracting data from the source endpoint.
     private $sourceQueryString = null;
 
-    /** -----------------------------------------------------------------------------------------
-     * A Query object representing the source query for this action
-     *
-     * @var Query | null
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // A Query object containing the source query for this ingestor
     protected $etlSourceQuery = null;
 
-    /** -----------------------------------------------------------------------------------------
-     * An array containing the field names available from the source record (query,
-     * structured file, etc.)
-     *
-     * @var array | null
-     * ------------------------------------------------------------------------------------------
-     */
+    // The list of field names in the source query
+    protected $availableSourceQueryFields = null;
 
-    protected $sourceRecordFields = null;
+    // Note these values are used so we don't have to escape quotes and such.
 
-    /** -----------------------------------------------------------------------------------------
-     * Line separator for MySQL LOAD DATA INFILE LINES TERMINATED BY.
-     *
-     * @var string
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // Line separator for MySQL LOAD DATA INFILE LINES TERMINATED BY.
     protected $lineSeparator = '\n';
 
-    /** -----------------------------------------------------------------------------------------
-     * Field separator for MySQL LOAD DATA INFILE FIELDS TERMINATED BY.
-     *
-     * @var string
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // Field separator for MySQL LOAD DATA INFILE FIELDS TERMINATED BY.
     protected $fieldSeparator = '\t';
 
-    /** -----------------------------------------------------------------------------------------
-     * String enclosure for MySQL LOAD DATA INFILE ENCLOSED BY.
-     *
-     * @var string
-     * ------------------------------------------------------------------------------------------
-     */
-
+    // String enclosure for MySQL LOAD DATA INFILE ENCLOSED BY.
     protected $stringEnclosure = '';
 
-    /** -----------------------------------------------------------------------------------------
-     * Database helper object such as MySQLHelper
+    /* ------------------------------------------------------------------------------------------
+     * Set up data endpoints and other options.
      *
-     * @var object
-     * ------------------------------------------------------------------------------------------
-     */
-
-    private $_dest_helper = null;
-
-    /** -----------------------------------------------------------------------------------------
-     * General setup.
-     *
-     * @see iAction::__construct()
-     *
-     * @param aOptions $options Options specific to this Ingestor
+     * @param IngestorOptions $options Options specific to this Ingestor
      * @param EtlConfiguration $etlConfig Parsed configuration options for this ETL
-     * @param Log $logger PEAR Log object for system logging
      * ------------------------------------------------------------------------------------------
      */
 
@@ -196,7 +128,7 @@ class pdoIngestor extends aIngestor
 
     }  // __construct()
 
-    /** -----------------------------------------------------------------------------------------
+    /* ------------------------------------------------------------------------------------------
      * @see iAction::initialize()
      * ------------------------------------------------------------------------------------------
      */
@@ -214,21 +146,13 @@ class pdoIngestor extends aIngestor
         // Get the handles for the various database endpoints
 
         if ( ! $this->utilityEndpoint instanceof iRdbmsEndpoint ) {
-            $this->logAndThrowException(
-                sprintf(
-                    "Utility endpoint %s does not implement ETL\\DataEndpoint\\iRdbmsEndpoint",
-                    get_class($this->utilityEndpoint)
-                )
-            );
+            $msg = "Utility endpoint does not implement of ETL\\DataEndpoint\\iRdbmsEndpoint";
+            $this->logAndThrowException($msg);
         }
 
         if ( ! $this->sourceEndpoint instanceof iRdbmsEndpoint ) {
-            $this->logAndThrowException(
-                sprintf(
-                    "Source endpoint %s does not implement ETL\\DataEndpoint\\iRdbmsEndpoint",
-                    get_class($this->sourceEndpoint)
-                )
-            );
+            $msg = "Source endpoint is not an instance of ETL\\DataEndpoint\\iRdbmsEndpoint";
+            $this->logAndThrowException($msg);
         }
 
         if ( "mysql" == $this->destinationHandle->_db_engine ) {
@@ -254,11 +178,7 @@ class pdoIngestor extends aIngestor
             // in the _execute() function with the current start/end dates but are needed here to
             // parse the query.
 
-            $this->getEtlOverseerOptions()->applyOverseerRestrictions(
-                $this->etlSourceQuery,
-                $this->sourceEndpoint,
-                $this
-            );
+            $this->getEtlOverseerOptions()->applyOverseerRestrictions($this->etlSourceQuery, $this->sourceEndpoint, $this);
 
         }  // ( null === $this->etlSourceQuery )
 
@@ -270,27 +190,124 @@ class pdoIngestor extends aIngestor
         if ( null !== $this->sourceQueryString &&
              ! (is_string($this->sourceQueryString) || empty($this->sourceQueryString)) )
         {
-            $this->logAndThrowException("Source query must be null or a non-empty string");
+            $msg = "Source query must be null or a non-empty string";
+            $this->logAndThrowException($msg);
         }
 
         // Get the list of available source query fields. If we have described the source query in
-        // the JSON config, use the record keys otherwise we need to parse the SQL string. It is
-        // expected that the source record fields are in the same order as they are in the SQL
-        // query.
-        //
-        // NOTE: The SQL parser can fail on complex queries or those containing a UNION. In this
-        // case, allow the child class should also set the source field records in
-        // getSourceQueryString().
+        // the JSON config, use the record keys otherwise we need to parse the SQL string.
 
-        if ( null === $this->sourceRecordFields ) {
-            $this->sourceRecordFields = (
-                null !== $this->etlSourceQuery
-                ? array_keys($this->etlSourceQuery->records)
-                : $this->getSqlColumnNames($this->sourceQueryString)
-            );
+        $this->availableSourceQueryFields =
+            ( null !== $this->etlSourceQuery
+              ? array_keys($this->etlSourceQuery->getRecords())
+              : $this->getSqlColumnNames($this->sourceQueryString) );
+
+        $this->destinationFieldMappings = $this->getDestinationFields();
+
+        // Generate and verify destination fields.
+        //
+        // Use Cases:
+        //
+        // >= 1 table & mismatch in # tables vs # dest fields = error
+        // 1 table & 0 field list = create destination fields from query
+        // 1 table & 1 field list = verify columns
+        // >= 1 table & # tables = # dest fields = verify columns
+        //
+        // 1. If a single destination table definition has been provided and destination fields have
+        // not been defined, create the destination fields assuming all of the columns from the
+        // query will be used.
+        //
+        // 2. If multiple destination tables have been defined the destination fields must be
+        // provided in the configuration or a subclass. Verify that the number of tables and
+        // destination field lists match.
+        //
+        // 3. Verify that all destination field mappings are valid.
+
+        if ( 1 == count($this->etlDestinationTableList)
+             && 0 == count($this->destinationFieldMappings) )
+        {
+            // Use all of the source columns as destination fields. Check that the all of the
+            // parsed columns are found in the table definition. If not, throw an error and the
+            // developer will need to provide them.
+
+            reset($this->etlDestinationTableList);
+            $etlTableKey = key($this->etlDestinationTableList);
+
+            // We only need to parse the SQL if it has been provided as a string, otherwise use:
+            // array_keys($this->etlSourceQuery->getRecords());
+
+            $this->destinationFieldMappings[$etlTableKey] =
+                array_combine($this->availableSourceQueryFields, $this->availableSourceQueryFields);
+            $this->logger->debug("Destination fields parsed from source query (table definition key '$etlTableKey'): " .
+                                 implode(", ", $this->destinationFieldMappings[$etlTableKey]));
+            $this->fullSourceToDestinationMapping = true;
+        } elseif ( count($this->etlDestinationTableList) > 1
+                    && count($this->destinationFieldMappings) != count($this->etlDestinationTableList) )
+        {
+            if ( 0 == count($this->destinationFieldMappings) ) {
+                $msg = "destination_field_map must be defined when > 1 table definitions are provided";
+            } else {
+                $msg = "Destination fields missing for destination tables (" .
+                    implode(",", array_diff(array_keys($this->etlDestinationTableList), array_keys($this->destinationFieldMappings))) .
+                    ")";
+            }
+            $this->logAndThrowException($msg);
         }
 
-        $this->parseDestinationFieldMap($this->sourceRecordFields);
+        // Ensure that the keys in the destination record map match a defined table
+
+        foreach ( array_keys($this->destinationFieldMappings) as $destinationTableKey ) {
+            if ( ! array_key_exists($destinationTableKey, $this->etlDestinationTableList) ) {
+                $msg = "Destination record map references undefined table: $destinationTableKey";
+                $this->logAndThrowException($msg);
+            }
+        }
+
+        // Verify that the destination column keys match the table columns and the values match a
+        // column in the query.
+
+        $undefinedDestinationTableColumns = array();
+        $undefinedSourceQueryColumns = array();
+
+        foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable ) {
+            $availableTableFields = $etlTable->getColumnNames();
+
+            // Ensure destination table columns exist (keys)
+
+            $destinationTableMap = array_keys($this->destinationFieldMappings[$etlTableKey]);
+            $missing = array_diff($destinationTableMap, $availableTableFields);
+            if ( 0  != count($missing) ) {
+                $undefinedDestinationTableColumns[] = "Table '$etlTableKey' has undefined table columns/keys (" .
+                    implode(",", $missing) . ")";
+            }
+
+            // Ensure source query columns exist (values)
+            $sourceQueryFields = $this->destinationFieldMappings[$etlTableKey];
+            $missing = array_diff($sourceQueryFields, $this->availableSourceQueryFields);
+            if ( 0  != count($missing) ) {
+                $missing = array_map(
+                    function ($k, $v) {
+                        return "$k = $v";
+                    },
+                    array_keys($missing),
+                    $missing
+                );
+                $undefinedSourceQueryColumns[] = "Table '$etlTableKey' has undefined source query records for keys (" .
+                    implode(", ", $missing) . ")";
+            }
+
+        }  // foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable )
+
+        if ( 0 != count($undefinedDestinationTableColumns) || 0 != count($undefinedSourceQueryColumns) ) {
+            $msg = "Undefined keys or values in ETL destination_record_map. ";
+            if ( 0 != count($undefinedDestinationTableColumns) ) {
+                $msg .= implode("; ", $undefinedDestinationTableColumns) . ", ";
+            }
+            if ( 0 != count($undefinedSourceQueryColumns) ) {
+                $msg .= implode("; ", $undefinedSourceQueryColumns);
+            }
+            $this->logAndThrowException($msg);
+        }
 
         $this->initialized = true;
 
@@ -298,24 +315,60 @@ class pdoIngestor extends aIngestor
 
     } // initialize()
 
-    /** -----------------------------------------------------------------------------------------
-     * Get the query to be run against the source data endpoint that will be used to
-     * extract the data.
+    /* ------------------------------------------------------------------------------------------
+     * By default, we will attempt to parse the destination fields from the source query unless this
+     * method returns a non-null value. Child classes may override this method if parsing the source
+     * query is not appropriate.
      *
-     * @return string The query on the source endpoint.
+     * @return NULL to attempt to parse the destination fields from the source query, or an array
+     *   where the keys match etl table definitions and values map table columns (destination) to
+     *   query result columns (source).
+     *   ------------------------------------------------------------------------------------------
+     */
+
+    protected function getDestinationFields()
+    {
+        if ( ! isset($this->parsedDefinitionFile->destination_record_map) ) {
+            return null;
+        } elseif ( ! is_object($this->parsedDefinitionFile->destination_record_map) ) {
+            $msg = "destination_fields must be an object where keys match table definition keys";
+            $this->logAndThrowException($msg);
+        }
+
+        $destinationFieldMappings = array();
+
+        foreach ( $this->parsedDefinitionFile->destination_record_map as $etlTableKey => $fieldMap ) {
+            if ( ! is_object($fieldMap) ) {
+                $msg = "Destination field map for table '$etlTableKey' must be an object";
+                $this->logAndThrowException($msg);
+            } elseif ( 0 == count(array_keys((array) $fieldMap)) ) {
+                $msg = "destination_record_map for '$etlTableKey' is empty";
+                $this->logger->warning($msg);
+            }
+            // Convert the field map from an object to an associative array. Keys are table columns
+            // (destination) and values are query result columns (source)
+            $destinationFieldMappings[$etlTableKey] = (array) $fieldMap;
+        }
+
+        return $destinationFieldMappings;
+    }  // getDestinationFields()
+
+    /* ------------------------------------------------------------------------------------------
+     * Get the query to be run against the source data endpoint that will extract the data.
+     *
+     * @return A string containing the query on the source endpoint.
      * ------------------------------------------------------------------------------------------
      */
 
     protected function getSourceQueryString()
     {
         if ( null === $this->etlSourceQuery ) {
-            $this->logAndThrowException(
-                "ETL source query object not instantiated.  Perhaps it is not specified in "
-                . "the definition file and not implemented in the Ingestor."
-            );
+            $msg ="ETL source query object not instantiated. " .
+                "Perhaps it is not specified in the definition file and not implemented in the Ingestor.";
+            $this->logAndThrowException($msg);
         }
 
-        $sql = $this->etlSourceQuery->getSql();
+        $sql = $this->etlSourceQuery->getSelectSql();
 
         if ( null !== $this->variableMap ) {
             $sql = Utilities::substituteVariables(
@@ -330,7 +383,7 @@ class pdoIngestor extends aIngestor
 
     }  // getSourceQueryString()
 
-    /** -----------------------------------------------------------------------------------------
+    /* ------------------------------------------------------------------------------------------
      * Perform the query on the data source.
      *
      * @return A PDOStatement with the results of the source query.
@@ -350,7 +403,6 @@ class pdoIngestor extends aIngestor
 
         $query_success = false;
         $n_attempts = 0;
-        $srcStatement = null;
 
         while (false == $query_success) {
             $n_attempts += 1;
@@ -373,9 +425,8 @@ class pdoIngestor extends aIngestor
                         array('exception' => $e, 'sql' => $this->sourceQueryString, 'endpoint' => $this->sourceEndpoint)
                     );
                 } elseif ( $n_attempts > self::MAX_QUERY_ATTEMPTS ) {
-                    $this->logAndThrowException(
-                        sprintf("Could not execute source query after %d attempts. Exiting.", self::MAX_QUERY_ATTEMPTS)
-                    );
+                    $msg = "Could not execute source query after " . self::MAX_QUERY_ATTEMPTS . " attempts. Exiting.";
+                    $this->logAndThrowException($msg);
                 }
 
                 $this->logger->info(
@@ -396,34 +447,108 @@ class pdoIngestor extends aIngestor
 
     }  // getSourceData()
 
-    /** -----------------------------------------------------------------------------------------
-     * Perform pre-execution tasks including disabling foreign key constraints and
-     * managing table structure.
-     *
-     * @see iAction::performPreExecuteTasks()
-     * ------------------------------------------------------------------------------------------
-     */
+  /* ------------------------------------------------------------------------------------------
+   * By default, there are no pre-execution tasks.
+   *
+   * @see iAction::performPreExecuteTasks()
+   * ------------------------------------------------------------------------------------------
+   */
 
     protected function performPreExecuteTasks() {
 
-        parent::performPreExecuteTasks();
-
-        // Update the start/end dates for this query and get the source query string. It
-        // is important to do it in the pre-execute stage because if we are chunking our
-        // ingest it will get updated every time.
+        // ------------------------------------------------------------------------------------------
+        // Update the start/end dates for this query and get the source query string. It is important
+        // to do it in the pre-execute stage because if we are chunking our ingest it will get
+        // updated every time.
 
         $this->sourceQueryString = $this->getSourceQueryString();
+
+        // ------------------------------------------------------------------------------------------
+        // ETL table management. We can extract the table name, schema, and column names from this
+        // object.
+
+        $sqlList = array();
+        $disableForeignKeys = false;
+
+        try {
+
+            // Bring the destination table in line with the configuration if necessary.  Note that
+            // manageTable() is DRYRUN aware.
+
+            foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable ) {
+                $qualifiedDestTableName = $etlTable->getFullName();
+
+                if ( "myisam" == strtolower($etlTable->getEngine()) ) {
+                    $disableForeignKeys = true;
+                    if ( $this->options->disable_keys ) {
+                        $this->logger->info("Disable keys on $qualifiedDestTableName");
+                        $sqlList[] = "ALTER TABLE $qualifiedDestTableName DISABLE KEYS";
+                    }
+                }
+
+                $this->manageTable($etlTable, $this->destinationEndpoint);
+
+            }  // foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable )
+
+        } catch ( Exception $e ) {
+            $msg = "Error managing ETL table for " . $this->getName() . ": " . $e->getMessage();
+            $this->logAndThrowException($msg);
+        }
+
+        if ( $disableForeignKeys ) {
+            // See http://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_foreign_key_checks
+            $sqlList[] = "SET FOREIGN_KEY_CHECKS = 0";
+        }
+
+        $this->executeSqlList($sqlList, $this->destinationEndpoint, "Pre-execute tasks");
 
         return true;
 
     }  // performPreExecuteTasks()
 
-    /** ------------------------------------------------------------------------------------------
+    /* ------------------------------------------------------------------------------------------
+     * By default, there are no pre-execution tasks.
+     *
+     * @see iAction::performPostExecuteTasks()
+     * ------------------------------------------------------------------------------------------
+     */
+
+    protected function performPostExecuteTasks($numRecordsProcessed)
+    {
+        $sqlList = array();
+        $enableForeignKeys = false;
+
+        foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable ) {
+            $qualifiedDestTableName = $etlTable->getFullName();
+
+            if ( "myisam" == strtolower($etlTable->getEngine()) ) {
+                $enableForeignKeys = true;
+                if ( $this->options->disable_keys ) {
+                    $this->logger->info("Enable keys on $qualifiedDestTableName");
+                    $sqlList[] = "ALTER TABLE $qualifiedDestTableName ENABLE KEYS";
+                }
+            }
+
+            if ( $numRecordsProcessed > 0 ) {
+                $sqlList[] = "ANALYZE TABLE $qualifiedDestTableName";
+            }
+        }
+
+        if ( $enableForeignKeys ) {
+            // See http://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_foreign_key_checks
+            $sqlList[] = "SET FOREIGN_KEY_CHECKS = 1";
+        }
+
+        $this->executeSqlList($sqlList, $this->destinationEndpoint, "Post-execute tasks");
+
+        return true;
+    }  // performPostExecuteTasks()
+
+    /* ------------------------------------------------------------------------------------------
      * @see iAction::execute()
      * ------------------------------------------------------------------------------------------
      */
 
-    // @codingStandardsIgnoreLine
     protected function _execute()
     {
         // Since the overseer may split the ingestion period up into chunks. Apply the current
@@ -431,13 +556,8 @@ class pdoIngestor extends aIngestor
 
         if ( null !== $this->etlSourceQuery) {
             $this->getEtlOverseerOptions()->applyOverseerRestrictions($this->etlSourceQuery, $this->sourceEndpoint, $this);
+            $this->sourceQueryString = $this->getSourceQueryString();
         }
-
-        // Re-generate the source query string taking into account overseer restrictions, or in the
-        // case where a child class overrides getSourceQueryString() allow any updated macros to be
-        // re-applied.
-
-        $this->sourceQueryString = $this->getSourceQueryString();
 
         // ------------------------------------------------------------------------------------------
         // Main ingest
@@ -463,19 +583,18 @@ class pdoIngestor extends aIngestor
 
     }  // _execute()
 
-    /** -----------------------------------------------------------------------------------------
-     * If the source and destination endpoints are on the same database server we can
-     * optimize the ingestion by executing an INSERT...SELECT statement directly on the
-     * server rather than selecting the data, brining it back to this host, chunking it
-     * into a file, and running LOAD DATA INFILE to load it back into the database. Tests
-     * on 875K records show a 29% improvement using INSERT...SELECT and a 48% improvement
-     * using INSERT...SELECT and disabling keys during load.
+    /* ------------------------------------------------------------------------------------------
+     * If the source and destination endpoints are on the same database server we can optimize the
+     * ingestion by executing an INSERT...SELECT statement directly on the server rather than
+     * selecting the data, brining it back to this host, chunking it into a file, and running LOAD
+     * DATA INFILE to load it back into the database. Tests on 875K records show a 29% improvement
+     * using INSERT...SELECT and a 48% improvement using INSERT...SELECT and disabling keys during
+     * load.
      *
-     * NOTE: This method assumes that data is being mapped from one source table to one
-     * destination table and all columns are being used. If any translation is performed
-     * then this method cannot be used.
+     * NOTE: This method assumes that data is being mapped from one source table to one destination
+     * table and all columns are being used.
      *
-     * @return int The number of records processed
+     * @return The number of records processed
      * ------------------------------------------------------------------------------------------
      */
 
@@ -485,19 +604,10 @@ class pdoIngestor extends aIngestor
         reset($this->etlDestinationTableList);
         $qualifiedDestTableName = current($this->etlDestinationTableList)->getFullName();
 
-        // Generate the list of destination fields. Note that the field list for the INSERT must be
-        // in the same order as the fields returned by the query or we will get field mismatches.
-        // Use the source record fields (generated from the source query in initialize()) as the
-        // correct order. Since the destination field map may have been user-specified we cannot
-        // guarantee the order.
-
-        $firstFieldMap = current($this->destinationFieldMappings);
-        $destColumnList = array();
-        foreach ( $this->sourceRecordFields as $sourceField ) {
-            if ( array_key_exists($sourceField, $firstFieldMap) ) {
-                $destColumnList[] = $sourceField;
-            }
-        }
+        // Keys are table definition columns (destination) and values are query result columns (source). For a
+        // single database ingest it is assumed that no mapping is taking place (i.e., all source
+        // columns are mapped to the same destination columns)
+        $destColumnList = array_keys(current($this->destinationFieldMappings));
 
         // The default method for ingestion is INSERT INTO ON DUPLICATE KEY UPDATE because tests
         // have shown an approx 40% performance improvement when updating existing data over REPLACE
@@ -519,7 +629,7 @@ class pdoIngestor extends aIngestor
                 $destColumnList
             );
             $updateColumns = implode(',', $updateColumnList);
-            $sql = "INSERT INTO $qualifiedDestTableName\n($destColumns)\n" . $this->sourceQueryString
+            $sql = "INSERT INTO $qualifiedDestTableName ($destColumns) " . $this->sourceQueryString
                 . "\nON DUPLICATE KEY UPDATE $updateColumns";
         }
 
@@ -538,39 +648,34 @@ class pdoIngestor extends aIngestor
 
     }  // singleDatabaseIngest()
 
-    /** -----------------------------------------------------------------------------------------
-     * If the source and destination endpoints are not on the same database server, we are
-     * populating multiple tables from a single query, or translation is being performed
-     * on the data we will need to select the data, brining it back to this host, chunk it
-     * into a file, and run LOAD DATA INFILE to load it into the database.
+    /* ------------------------------------------------------------------------------------------
+     * If the source and destination endpoints are not on the same database server (or other
+     * criteria are met such as needing to update rather than replace a row) we will need to select
+     * the data, brining it back to this host, chunk it into a file, and run LOAD DATA INFILE to
+     * load it into the database.
      *
-     * @see allowSingleDatabaseOptimization()
-     *
-     * @return int The number of records processed
+     * @return The number of records processed
      * ------------------------------------------------------------------------------------------
      */
 
     private function multiDatabaseIngest()
     {
+
         // Set up one infile and output file descriptor for each destination
 
-        $ingestStart = microtime(true);
         $infileList = array();
         $outFdList = array();
         $loadStatementList = array();
         $numDestinationTables = count($this->etlDestinationTableList);
 
-        // Iterate over the destination field mappings rather than the destination table list because it
-        // is possible that a table definition is provided but no data is mapped to it.
-
-        foreach ( $this->destinationFieldMappings as $etlTableKey => $destFieldToSourceFieldMap ) {
-
-            // The destination map is parsed in aRdbmsDestinationAction::parseDestinationFieldMap()
-            // and any table with no mapping is not included. Keys are also verified to match a
-            // destionation table name.
-
-            $etlTable = $this->etlDestinationTableList[$etlTableKey];
+        foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable ) {
             $qualifiedDestTableName = $etlTable->getFullName();
+
+            // If there are no source query columns mapped to this table, skip it.
+
+            if ( 0 == count($this->destinationFieldMappings[$etlTableKey]) ) {
+                continue;
+            }
 
             $infileName = tempnam(
                 sys_get_temp_dir(),
@@ -580,7 +685,7 @@ class pdoIngestor extends aIngestor
             $this->logger->debug("Using temporary file '$infileName' for destination table key '$etlTableKey'");
 
             // Keys are table columns (destination) and values are query result columns (source)
-            $destColumnList = array_keys($destFieldToSourceFieldMap);
+            $destColumnList = array_keys($this->destinationFieldMappings[$etlTableKey]);
 
             // The default method for ingestion is INSERT INTO ON DUPLICATE KEY UPDATE because tests
             // have shown an approx 40% performance improvement when updating existing data over
@@ -598,7 +703,7 @@ class pdoIngestor extends aIngestor
             } else {
                 $tmpTable = $etlTable->getSchema(true)
                     . "."
-                    . $this->destinationEndpoint->quoteSystemIdentifier("tmp_" . $etlTable->name . "_" . time());
+                    . $this->destinationEndpoint->quoteSystemIdentifier("tmp_" . $etlTable->getName() . "_" . time());
 
                 $destColumns = implode(',', $destColumnList);
                 $updateColumnList = array_map(
@@ -625,7 +730,7 @@ class pdoIngestor extends aIngestor
             $infileList[$etlTableKey] = $infileName;
             $loadStatementList[$etlTableKey] = $loadStatement;
 
-        }  // foreach ( $this->destinationFieldMappings as $etlTableKey => $destFieldToSourceFieldMap )
+        }  // foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable )
 
         if ( $this->getEtlOverseerOptions()->isDryrun() ) {
             $this->logger->debug("Source query " . $this->sourceEndpoint . ":\n" . $this->sourceQueryString);
@@ -640,16 +745,14 @@ class pdoIngestor extends aIngestor
 
         foreach ( $infileList as $etlTableKey => $infileName ) {
             if ( false === ($outFd = fopen($infileName, 'w')) ) {
-                $this->logAndThrowException(
-                    sprintf("Failed to open temporary file for database ingest: '%s'", $infileName)
-                );
+                $msg = "Failed to open temporary file for database ingest: '$infileName'";
+                $this->logAndThrowException($msg);
             }
             $outFdList[$etlTableKey] = $outFd;
         }  // foreach ( $infileList as $etlTableKey => $infileName )
 
         // Turn off buffering if necessary. This is a MySQL specific optimization.
 
-        $originalBufferedQueryAttribute = null;
         if ( ! $this->options->buffered_query && $this->sourceEndpoint instanceof Mysql ) {
             $this->logger->info("Switching to un-buffered query mode");
             $pdo = $this->sourceHandle->handle();
@@ -746,29 +849,14 @@ class pdoIngestor extends aIngestor
         // actually *hinders* performance in the tests! This was verified with 4,195,524 and 124,120
         // rows.
 
-        $orderId = 0;
-
         while ( $srcRecord = $sourceStatement->fetch(PDO::FETCH_ASSOC) ) {
 
             $numSourceRecordsProcessed++;
 
-            // Some historical ingestors use an order_id and treat it similar to an auto-increment
-            // field, setting its value starting at 0 and incrementing for each record. It is not
-            // clear if this is used anywhere, but the functionality is maintained here for
-            // compatibility. Note that this does not work when adding fields into a table (e.g.,
-            // only when the table is truncated) and will not work properly in cases where the order
-            // is relative to a key. For example, if a key is resource_id and the order should be
-            // maintained for each unique resource_id we cannot use this method. To not overwrite
-            // existing data, only set the order_id if the source field exists and is NULL.
-
-            if ( array_key_exists('order_id', $srcRecord) && null === $srcRecord['order_id'] ) {
-                $srcRecord['order_id'] = $orderId++;
-            }
-
             // Note that an array of transformed records is returned because a single source
             // record may be transformed into multiple records.
 
-            $transformedRecords = $this->transform($srcRecord, $orderId);
+            $transformedRecords = $this->transform($srcRecord);
 
             foreach ( $transformedRecords as $record ) {
 
@@ -826,7 +914,6 @@ class pdoIngestor extends aIngestor
 
                             ftruncate($outFdList[$etlTableKey], 0);
                             rewind($outFdList[$etlTableKey]);
-                            $numFilesLoaded++;
                         }
                         catch (Exception $e) {
                             $msg = array('message'    => $e->getMessage(),
@@ -836,11 +923,9 @@ class pdoIngestor extends aIngestor
                             $this->logger->err($msg);
                             throw $e;
                         }
-                    }  // foreach ( $loadStatementList as $etlTableKey => $loadStatement )
+                    }  // foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable )
 
-                    $this->logger->debug(
-                        sprintf('Loaded %d files in %ds', $numFilesLoaded, microtime(true) - $loadFileStart)
-                    );
+                    $this->logger->debug(sprintf('Loaded %d files in %ds', $numFilesLoaded, microtime(true) - $loadFileStart));
                     $loadFileStart = microtime(true);
                     $numRecordsInFile = 0;
 
@@ -876,30 +961,21 @@ class pdoIngestor extends aIngestor
 
                 fclose($outFdList[$etlTableKey]);
                 @unlink($infileList[$etlTableKey]);
-                $numFilesLoaded++;
 
-            }  // foreach ( $loadStatementList as $etlTableKey => $loadStatement )
+            }  // foreach ( $this->etlDestinationTableList as $etlTableKey => $etlTable )
 
             $this->logger->debug(sprintf('Loaded %d files in %ds', $numFilesLoaded, microtime(true) - $loadFileStart));
 
         }  // if ( $numRecordsInFile)
 
         $this->logger->info(
-            sprintf(
-                '%s: Processed %s records (%s source records) in %ds',
-                get_class($this),
-                number_format($totalRecordsProcessed),
-                number_format($numSourceRecordsProcessed),
-                microtime(true) - $ingestStart
-            )
+            sprintf('%s: Processed %s records (%s source records)', get_class($this), number_format($totalRecordsProcessed), number_format($numSourceRecordsProcessed))
         );
 
         // Return buffering to its original state.  This is a MySQL specific optimization.
 
         if ( ! $this->options->buffered_query && $this->sourceEndpoint instanceof Mysql ) {
-            $this->logger->info(
-                sprintf("Returning buffered query mode to: %s", ($originalBufferedQueryAttribute ? "true" : "false"))
-            );
+            $this->logger->info("Returning buffered query mode to: " . ($originalBufferedQueryAttribute ? "true" : "false") );
             $pdo = $this->sourceHandle->handle();
             $pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $originalBufferedQueryAttribute);
         }
@@ -908,24 +984,20 @@ class pdoIngestor extends aIngestor
 
     }  // multiDatabaseIngest()
 
-    /** -----------------------------------------------------------------------------------------
+    /* ------------------------------------------------------------------------------------------
      * Perform a transformation on a single data record (row). Transformation may alter
      * the values of the record and may create multiple records from a single record, but
      * it should not modify the struture of the record itself (e.g., the keys). Because we
      * support the ability to transform a single source record into multiple result
      * records, an array of records is returned, even for a single result record.
      *
-     * @param array $record An associative array containing the source record where the
-     *   keys are the field names.
-     * @param int $orderId A reference to the relative ordering value used to set the value of an
-     *   order_id field. @see multiDatabaseIngest()
+     * @param $record An associative array containing the source record
      *
-     * @return array A 2-dimensional array of potentially transformed records where each
-     *  element is an individual record.
+     * @return An array of transformed records.
      * ------------------------------------------------------------------------------------------
      */
 
-    protected function transform(array $srcRecord, &$orderId)
+    protected function transform(array $srcRecord)
     {
         foreach ( $srcRecord as $key => &$value ) {
             if ( null === $value ) {
@@ -943,14 +1015,14 @@ class pdoIngestor extends aIngestor
 
     }  // transform()
 
-    /** ------------------------------------------------------------------------------------------
-     * Determine if we can support optimizations for queries within a single database. Not
-     * only must our source and destination databases be the same, but we cannot optimize
-     * if we are dealing with multiple destination tables, or other factors.  Optimization
-     * may be performed as a "INSERT...SELECT" directly in the database rather than a
-     * SELECT returning the data and then a separate INSERT.
+    /* ------------------------------------------------------------------------------------------
+     * Determine if we can support optimizations for queries within a single database. Not only must
+     * our source and destination databases be the same, but we cannot optimize if we are dealing
+     * with multiple destination tables, or other factors.  Optimization may be performed as a
+     * "INSERT...SELECT" directly in the database rather than a SELECT returning the data and then a
+     * separate INSERT.
      *
-     * @return boolean TRUE if database optimization is allowed, FALSE if not.
+     * @return true If both the source and destination are the same server.
      * ------------------------------------------------------------------------------------------
      */
 
@@ -990,21 +1062,18 @@ class pdoIngestor extends aIngestor
             return false;
         }
 
-        // Can't optimize when writing data to more than 1 destination table
+        // Can't optimize more than 1 destination table
 
         if ( count($this->etlDestinationTableList) > 1 ) {
             $this->logger->debug("Multiple destination tables being populated");
             return false;
         }
 
-        // When creating the INSERT INTO ... SELECT statement in singleDatabaseIngest() we use the
-        // destination field map keys to generate the destination column list and use
-        // $this->sourceQueryString as the source query. These need to have the same fields (and be
-        // in the same order, but we will ensure proper order when generating the field list).
+        // Can't optimize if mapping a subset of the query fields
 
         reset($this->destinationFieldMappings);
 
-        if ( 0 != count(array_diff($this->sourceRecordFields, array_keys(current($this->destinationFieldMappings)))) ) {
+        if ( count($this->availableSourceQueryFields) != count(current($this->destinationFieldMappings)) ) {
             $this->logger->debug("Mapping a subset of the source query fields");
             return false;
         }

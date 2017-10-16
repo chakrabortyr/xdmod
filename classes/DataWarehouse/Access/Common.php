@@ -51,7 +51,7 @@ class Common
         );
 
         if ($start_date_parsed['error_count'] !== 0) {
-            throw new \DataWarehouse\Query\Exceptions\BadRequestException(
+            throw new Exception(
                 'start_date param is not in the correct format of Y-m-d.'
             );
         }
@@ -59,7 +59,7 @@ class Common
         $end_date_parsed = date_parse_from_format('Y-m-d', $this->request['end_date']);
 
         if ($end_date_parsed['error_count'] !== 0) {
-            throw new \DataWarehouse\Query\Exceptions\BadRequestException(
+            throw new Exception(
                 'end_date param is not in the correct format of Y-m-d.'
             );
         }
@@ -304,15 +304,11 @@ class Common
             return $result;
         }
 
-        if ($format === 'png' || $format === 'svg' || $format === 'pdf')
+        if ($format === 'png' || $format === 'svg' ) 
         {
-            $fileMeta = array(
-                'title' => $filename
-            );
-
             $result = array(
                 "headers" => \DataWarehouse\ExportBuilder::getHeader( $format, false, $filename),
-                "results" => \xd_charting\exportHighchart($returnData['data'][0], $width, $height, $scale, $format, null, $fileMeta)
+                "results" => \xd_charting\exportHighchart( $returnData['data'][0], $width, $height, $scale, $format)
             );
 
             return $result;

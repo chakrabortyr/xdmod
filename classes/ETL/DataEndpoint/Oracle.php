@@ -10,15 +10,10 @@
 namespace ETL\DataEndpoint;
 
 use ETL\DataEndpoint\DataEndpointOptions;
-use Log;
-use PDOException;
+use \Log;
 
 class Oracle extends aRdbmsEndpoint implements iRdbmsEndpoint
 {
-
-    // The ENDPOINT_NAME constant defines the name for this endpoint that should be used
-    // in configuration files. It also allows us to implement auto-discovery.
-    const ENDPOINT_NAME = 'oracle';
 
     public function __construct(DataEndpointOptions $options, Log $logger = null)
     {
@@ -116,7 +111,7 @@ AND table_name = UPPER(:tablename)";
             }
         } catch (PDOException $e) {
             $this->logAndThrowException(
-                "Error querying for table '$schemaName'.'$tableName':",
+                "Error querying for table '$schema'.'$tableName':",
                 array('exception' => $e, 'sql' => $sql, 'endpoint' => $this)
             );
         }
@@ -148,7 +143,6 @@ WHERE owner = UPPER(:schema)
 AND table_name = UPPER(:tablename)
 ORDER BY column_id ASC";
 
-        $result = null;
         $params = array(":schema" => $this->getSchema(),
                         ":tablename"  => $tableName);
 

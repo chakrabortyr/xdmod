@@ -11,12 +11,10 @@ class XdmodTestHelper
     private $cookie;
     private $verbose;
     private $curl;
-    private $cookiefile;
-    private $userrole = 'public';
 
     public function __construct($config = array())
     {
-        $this->config = json_decode(file_get_contents(__DIR__ . '/../../.secrets.json'), true);
+        $this->config = json_decode(file_get_contents(__DIR__ . '/../../.secrets'), true);
 
         $this->siteurl = $this->config['url'];
         $this->headers = array();
@@ -36,8 +34,8 @@ class XdmodTestHelper
         curl_setopt($this->curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, false);
 
-        $this->cookiefile = tempnam(sys_get_temp_dir(), "xdmodtestcookies.");
-        curl_setopt($this->curl, CURLOPT_COOKIEFILE, $this->cookiefile);
+        $cookiefile = tempnam(sys_get_temp_dir(), "xdmodtestcookies.");
+        curl_setopt($this->curl, CURLOPT_COOKIEFILE, $cookiefile);
 
         if (isset($config['decodetextasjson'])) {
             $this->decodeTextAsJson = true;
@@ -49,7 +47,7 @@ class XdmodTestHelper
 
     private function processResponseHeader($curl, $headerline)
     {
-        $tokens = explode(':', $headerline);
+        $tokens = split(':', $headerline);
         if (count($tokens) == 2) {
             $this->responseHeaders[$tokens[0]] = $tokens[1];
         }
@@ -113,19 +111,13 @@ class XdmodTestHelper
     public function authenticate($userrole)
     {
         if (! isset($this->config['role'][$userrole])) {
-            throw new \Exception("User role $userrole not defined in .secrets.json file");
+            throw new \Exception("User role $userrole not defined in .secrets file");
         }
-        $this->userrole = $userrole;
+
         $this->setauthvariables(null);
         $authresult = $this->post("rest/auth/login", null, $this->config['role'][$userrole]);
         $authtokens = $authresult[0]['results'];
         $this->setauthvariables($authtokens['token']);
-    }
-
-    public function logout()
-    {
-        $logoutResult = $this->post("rest/auth/logout", null, null);
-        $this->setauthvariables(null);
     }
 
     private function docurl()
@@ -202,15 +194,5 @@ class XdmodTestHelper
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $this->getheaders());
 
         return $this->docurl();
-    }
-    public function getSiteurl(){
-        return $this->siteurl;
-    }
-    public function getUserrole(){
-        return $this->userrole;
-    }
-    public function __destruct() {
-        curl_close($this->curl);
-        unlink($this->cookiefile);
     }
 }

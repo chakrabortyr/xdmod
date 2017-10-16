@@ -10,16 +10,16 @@
 
 namespace ETL\Maintenance;
 
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
 use ETL\aOptions;
 use ETL\iAction;
 use ETL\aAction;
 use ETL\DataEndpoint\iRdbmsEndpoint;
-use ETL\DbModel\Query;
-use PDOException;
+use ETL\DbEntity\Query;
+use \PDOException;
 use ETL\Utilities;
-use Log;
+use \Log;
 
 use PHPSQLParser\PHPSQLParser;
 
@@ -40,9 +40,6 @@ class VerifyDatabase extends aAction implements iAction
         'header'  => null,
         'footer'  => null
     );
-
-    // SQL to execute to perform the verification
-    protected $sqlQueryString = null;
 
     /* ------------------------------------------------------------------------------------------
      * @see aAction::__construct()
@@ -143,10 +140,10 @@ class VerifyDatabase extends aAction implements iAction
                 $this->sourceEndpoint->getSystemQuoteChar(),
                 $this->logger
             );
-            $this->queryColumnNames = array_keys($sourceQuery->records);
+            $this->queryColumnNames = array_keys($sourceQuery->getRecords());
             $this->setOverseerRestrictionOverrides();
             $this->getEtlOverseerOptions()->applyOverseerRestrictions($sourceQuery, $this->sourceEndpoint, $this);
-            $this->sqlQueryString = $sourceQuery->getSql();
+            $this->sqlQueryString = $sourceQuery->getSelectSql();
             $this->sqlQueryString = Utilities::substituteVariables(
                 $this->sqlQueryString,
                 $this->variableMap,
@@ -223,26 +220,6 @@ class VerifyDatabase extends aAction implements iAction
         return true;
 
     }  // initialize()
-
-    /** -----------------------------------------------------------------------------------------
-     * @see aAction::performPreExecuteTasks()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    protected function performPreExecuteTasks()
-    {
-        return true;
-    } // performPreExecuteTasks()
-
-    /** -----------------------------------------------------------------------------------------
-     * @see aAction::performPostExecuteTasks()
-     * ------------------------------------------------------------------------------------------
-     */
-
-    protected function performPostExecuteTasks($numRecordsProcessed = null)
-    {
-        return true;
-    }  // performPostExecuteTasks()
 
     /* ------------------------------------------------------------------------------------------
      * @see iAction::execute()

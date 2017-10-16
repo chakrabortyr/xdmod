@@ -375,8 +375,16 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
 
                         presentLoginResponse('Welcome, ' + Ext.util.Format.htmlEncode(data.results.name) + '.', true, "login_response");
 
-                        parent.location.href = '../../index.php' + parent.XDMoD.referer;
-                        parent.location.hash = parent.XDMoD.referer;
+                        var token = CCR.tokenize(parent.XDMoD.referer);
+
+                        if (token && token.tab && parent.CCR.xdmod.tabs.indexOf(token.tab) >= 0) {
+                            parent.location.href = '../../index.php' + token.raw;
+                            parent.location.hash = token.raw;
+                        }
+                        else{
+                            parent.location.href = '../../index.php';
+                            parent.location.hash = '';
+                        }
                         parent.location.reload();
                     } else {
                         XDMoD.TrackEvent('Login Window', 'Successful login', txtLoginUsername.getValue());
@@ -784,7 +792,7 @@ $xsedeLogin = xd_utilities\getConfiguration('features', 'xsede') == 'on';
 
                                         <!-- ======================================= -->
 
-                                        <?php if ($xsedeLogin || ($auth && $auth->isSamlConfigured())) : ?>
+                                        <?php if ($xsedeLogin) : ?>
                                         <div id="panel_account_reset"
                                              style="position: absolute; top: 66px; left: 286px; visibility: hidden">
                                             <?php else : ?>

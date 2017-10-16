@@ -17,7 +17,7 @@ namespace ETL\Maintenance;
 use ETL\aOptions;
 use ETL\iAction;
 use ETL\aAction;
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
 use Log;
 
@@ -87,16 +87,6 @@ class TestAction extends aAction implements iAction
     }
 
     public function isVerified()
-    {
-        return true;
-    }
-
-    protected function performPreExecuteTasks()
-    {
-        return true;
-    }
-
-    protected function performPostExecuteTasks($numRecordsProcessed = null)
     {
         return true;
     }

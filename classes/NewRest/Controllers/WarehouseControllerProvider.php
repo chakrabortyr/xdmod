@@ -116,6 +116,13 @@ class WarehouseControllerProvider extends BaseControllerProvider
                 "type" => "utf8-text",
                 "leaf" => true
             ),
+        \DataWarehouse\Query\RawQueryTypes::PEERS =>
+            array(
+                "infoid" => \DataWarehouse\Query\RawQueryTypes::PEERS,
+                "dtype" => "infoid",
+                "text" => "Peers",
+                "leaf" => false
+            ),
         \DataWarehouse\Query\RawQueryTypes::EXECUTABLE =>
             array(
                 "infoid" => \DataWarehouse\Query\RawQueryTypes::EXECUTABLE,
@@ -128,16 +135,6 @@ class WarehouseControllerProvider extends BaseControllerProvider
                                     environment.",
                 "type" => "nested",
                 "leaf" => true),
-        \DataWarehouse\Query\RawQueryTypes::PEERS =>
-            array(
-                "infoid" => \DataWarehouse\Query\RawQueryTypes::PEERS,
-                "dtype" => "infoid",
-                "text" => "Peers",
-                'url' => '/rest/v1.0/warehouse/search/jobs/peers',
-                'documentation' => 'Shows the list of other HPC jobs that ran concurrently using the same shared hardware resources.',
-                'type' => 'ganttchart',
-                "leaf" => true
-            ),
         \DataWarehouse\Query\RawQueryTypes::NORMALIZED_METRICS =>
             array(
                 "infoid" => \DataWarehouse\Query\RawQueryTypes::NORMALIZED_METRICS,
@@ -637,8 +634,8 @@ class WarehouseControllerProvider extends BaseControllerProvider
             throw new BadRequestException('params parameter must be valid JSON');
         }
 
-        if ( (isset($params['resource_id']) && isset($params['local_job_id'])) || isset($params['jobref']) ) {
-            return $this->getJobByPrimaryKey($app, $user, $realm, $params);
+        if (isset($params['resource_id']) && isset($params['local_job_id'])) {
+            return $this->_getJobByLocalJobId($app, $user, $realm, $params['resource_id'], $params['local_job_id']);
         } else {
             $startDate = $this->getStringParam($request, 'start_date', true);
             $endDate = $this->getStringParam($request, 'end_date', true);
@@ -1327,11 +1324,6 @@ class WarehouseControllerProvider extends BaseControllerProvider
             case 'analytics':
                 $results = $this->_getJobData($app, $user, $realm, $jobId, $action, $actionName);
                 break;
-            case 'peers':
-                $start = $this->getIntParam($request, 'start', true);
-                $limit = $this->getIntParam($request, 'limit', true);
-                $results = $this->getJobPeers($app, $user, $realm, $jobId, $start, $limit);
-                break;
             case 'executable':
                 $results = $this->_getJobExecutable($app, $user, $realm, $jobId, $action, $actionName);
                 break;
@@ -1358,83 +1350,6 @@ class WarehouseControllerProvider extends BaseControllerProvider
         }
 
         return $results;
-    }
-
-    /**
-     * Return data about a job's peers.
-     *
-     * @param Application $app The router application.
-     * @param XDUser $user the logged in user.
-     * @param $realm data realm.
-     * @param $jobId the unique identifier for the job.
-     * @param $start the start offset (for store paging).
-     * @param $limit the number of records to return (for store paging).
-     * @return json in Extjs.store parsable format.
-     */
-    protected function getJobPeers(Application $app, XDUser $user, $realm, $jobId, $start, $limit)
-    {
-        $jobdata = $this->_getJobDataSet($user, $realm, $jobId, 'internal');
-        if (!$jobdata->hasResults()) {
-            throw new NotFoundException();
-        }
-        $jobresults = $jobdata->getResults();
-        $thisjob = $jobresults[0];
-
-        $i = 0;
-
-        $result = array(
-            'series' => array(
-                array(
-                    'name' => 'Walltime',
-                    'data' => array(
-                        array(
-                            'x' => $i++,
-                            'low' => $thisjob['start_time_ts'] * 1000.0,
-                            'high' => $thisjob['end_time_ts'] * 1000.0
-                        )
-                    )
-                ),
-                array(
-                    'name' => 'Walltime',
-                    'data' => array()
-                )
-            ),
-            'categories' => array(
-                'Current'
-            ),
-            'schema' => array(
-                'timezone' => $thisjob['timezone'],
-                'ref' => array(
-                    'realm' => $realm,
-                    'jobid' => $jobId,
-                    "text" => $thisjob['resource'] . '-' . $thisjob['local_job_id']
-                )
-            )
-        );
-
-        $dataset = $this->_getJobDataSet($user, $realm, $jobId, 'peers');
-        foreach ($dataset->getResults() as $index => $jobpeer) {
-            if ( ($index >= $start) && ($index < ($start + $limit))) {
-                $result['series'][1]['data'][] = array(
-                    'x' => $i++,
-                    'low' => $jobpeer['start_time_ts'] * 1000.0,
-                    'high' => $jobpeer['end_time_ts'] * 1000.0,
-                    'ref' => array(
-                        'realm' => $realm,
-                        'jobid' => $jobpeer['jobid'],
-                        'local_job_id' => $jobpeer['local_job_id'],
-                        'resource' => $jobpeer['resource']
-                    )
-                );
-                $result['categories'][] = $jobpeer['resource'] . '-' . $jobpeer['local_job_id'];
-            }
-        }
-
-        return  $app->json(array(
-            'success' => true,
-            'data' => array($result),
-            'total' => count($dataset->getResults())
-        ));
     }
 
     /**
@@ -1658,6 +1573,19 @@ class WarehouseControllerProvider extends BaseControllerProvider
                 }
                 return $app->json(array('success' => true, "results" => $result));
                 break;
+            case "" . \DataWarehouse\Query\RawQueryTypes::PEERS:
+                $dataset = $this->_getJobDataSet($user, $realm, $jobId, "peers");
+                $result = array();
+                foreach ($dataset->getResults() as $jobpeer) {
+                    $result[] = array(
+                        "text" => $jobpeer['resource'] . '-' . $jobpeer['local_job_id'],
+                        "dtype" => "peerid",
+                        "peerid" => $jobpeer['jobid'],
+                        "qtip" => "Job Owner: " . $jobpeer['name'],
+                        "leaf" => true);
+                }
+                return $app->json(array('success' => true, "results" => $result));
+                break;
             default:
                 throw new BadRequestException("Node is a leaf");
         }
@@ -1868,7 +1796,7 @@ class WarehouseControllerProvider extends BaseControllerProvider
      * @param $type the type of image to generate
      * @return Response the image as an attachment
      */
-    private function chartImageResponse($data, $type, $settings)
+    private function chartImageResponse($data, $type)
     {
         // Enable plot marker only if a single point is present in the data series' plot data.
         // Otherwise plot the data with a line.
@@ -1885,12 +1813,6 @@ class WarehouseControllerProvider extends BaseControllerProvider
             }
         }
 
-        $axisTitleFontSize = ($settings['font_size'] + 12) . 'px';
-        $axisLabelFontSize = ($settings['font_size'] + 11) . 'px';
-        $mainTitleFontSize = ($settings['font_size'] + 16) . 'px';
-
-        $lineWidth = 1 + $settings['scale'];
-
         $chartConfig = array(
             'colors' => array( '#2f7ed8', '#0d233a', '#8bbc21', '#910000', '#1aadce', '#492970',
                         '#f28f43', '#77a1e5', '#c42525', '#a6c96a'
@@ -1899,17 +1821,9 @@ class WarehouseControllerProvider extends BaseControllerProvider
             'xAxis' => array(
                 'type' => 'datetime',
                 'minTickInterval' => 1000,
-                'labels' => array(
-                    'style' => array(
-                        'fontWeight'=> 'normal',
-                        'fontSize' => $axisLabelFontSize
-                    ),
-                ),
-                'lineWidth' => $lineWidth,
                 'title' => array(
                     'style' => array(
                         'fontWeight' => 'bold',
-                        'fontSize' => $axisTitleFontSize,
                         'color' => '#5078a0'
                     ),
                     'text' => 'Time (' . $data['schema']['timezone'] . ')'
@@ -1919,17 +1833,9 @@ class WarehouseControllerProvider extends BaseControllerProvider
                 'title' => array(
                     'style' => array(
                         'fontWeight' => 'bold',
-                        'fontSize' => $axisTitleFontSize,
                         'color' => '#5078a0'
                     ),
                     'text' => $data['schema']['units']
-                ),
-                'lineWidth' => $lineWidth,
-                'labels' => array(
-                    'style' => array(
-                        'fontWeight'=> 'normal',
-                        'fontSize' => $axisLabelFontSize
-                    ),
                 ),
                 'min' => 0.0
             ),
@@ -1938,15 +1844,10 @@ class WarehouseControllerProvider extends BaseControllerProvider
             ),
             'plotOptions' => array(
                 'line' => array(
-                    'lineWidth' => $lineWidth,
                     'marker' => array(
                         'enabled' => $markerEnabled
                     )
                 )
-            ),
-            'credits' => array(
-                'text' => $data['schema']['source'] . '. Powered by XDMoD/Highcharts',
-                'href' => ''
             ),
             'exporting' => array(
                 'enabled' => false
@@ -1954,10 +1855,10 @@ class WarehouseControllerProvider extends BaseControllerProvider
             'title' => array(
                 'style' => array(
                     'color' => '#444b6e',
-                    'fontSize' => $mainTitleFontSize
+                    'fontSize' => '16px'
                 ),
 
-                'text' => $settings['show_title'] ? $data['schema']['description'] : null
+                'text' => $data['schema']['description']
             )
         );
 
@@ -1965,8 +1866,8 @@ class WarehouseControllerProvider extends BaseControllerProvider
             'timezone' => $data['schema']['timezone']
         );
 
-        $chartImage = \xd_charting\exportHighchart($chartConfig, $settings['width'], $settings['height'], $settings['scale'], $type, $globalConfig, $settings['fileMetadata']);
-        $chartFilename = $settings['fileMetadata']['title'] . '.' . $type;
+        $chartImage = \xd_charting\exportHighchart($chartConfig, 916, 484, 1, $type, $globalConfig);
+        $chartFilename = $data['schema']['description'] . '.' . $type;
         $mimeOverride = $type == 'svg' ? 'image/svg+xml' : null;
 
         return $this->sendAttachment($chartImage, $chartFilename, $mimeOverride);
@@ -1982,34 +1883,24 @@ class WarehouseControllerProvider extends BaseControllerProvider
             throw new NotFoundException();
         }
 
-        $format = $this->getStringParam($request, 'format', false, 'json');
+        $resultMimeType = $this->getAcceptContentType(
+            $request,
+            array('text/csv', 'image/png', 'image/svg', 'image/svg+xml', 'application/json'),
+            'filetype'
+        );
 
-        if (!in_array($format, array('json', 'png', 'svg', 'pdf', 'csv'))) {
-            throw new BadRequestException('Unsupported format type.');
-        }
-
-        switch ($format) {
-            case 'png':
-            case 'pdf':
-            case 'svg':
-                $exportConfig = array(
-                    'width' => $this->getIntParam($request, 'width', false, 916),
-                    'height' => $this->getIntParam($request, 'height', false, 484),
-                    'scale' => floatval($this->getStringParam($request, 'scale', false, '1')),
-                    'font_size' => $this->getIntParam($request, 'font_size', false, 3),
-                    'show_title' => $this->getStringParam($request, 'show_title', false, 'y') === 'y' ? true : false,
-                    'fileMetadata' => array(
-                        'author' => $user->getFormalName(),
-                        'subject' => 'Timeseries data for ' . $results['schema']['source'],
-                        'title' => $results['schema']['description']
-                    )
-                );
-                $response = $this->chartImageResponse($results, $format, $exportConfig);
+        switch ($resultMimeType) {
+            case 'image/png':
+                $response = $this->chartImageResponse($results, 'png');
                 break;
-            case 'csv':
+            case 'image/svg+xml':
+            case 'image/svg':
+                $response = $this->chartImageResponse($results, 'svg');
+                break;
+            case 'text/csv':
                 $response = $this->chartDataResponse($results);
                 break;
-            case 'json':
+            case 'application/json':
             default:
                 $response = $app->json(array("success" => true, "data" => array($results)));
                 break;
@@ -2019,31 +1910,23 @@ class WarehouseControllerProvider extends BaseControllerProvider
     }
 
     /**
-     * Attempts to retrieve job information given the provided resource &
-     * localjob id or by the db primary key (called jobref here to avoid end user
-     * confusion between this internal identifier and the job id provided
-     * by the resource-manager).
+     * Attempts to retrieve job information given the provided resource / localjob id's.
      *
      * @param Application $app
      * @param \XDUser $user
      * @param string $realm
-     * @param array $searchparams
+     * @param int $resourceId
+     * @param int $localJobId
      * @return \Symfony\Component\HttpFoundation\JsonResponse
      * @throws \DataWarehouse\Query\Exceptions\AccessDeniedException
      * @throws BadRequestException
      */
-    private function getJobByPrimaryKey(Application $app, \XDUser $user, $realm, $searchparams)
+    private function _getJobByLocalJobId(Application $app, \XDUser $user, $realm, $resourceId, $localJobId)
     {
-        if (isset($searchparams['jobref'])) {
-            $params = array(
-                new \DataWarehouse\Query\Model\Parameter('_id', '=', $searchparams['jobref'])
-            );
-        } else {
-            $params = array(
-                new \DataWarehouse\Query\Model\Parameter("resource_id", "=", $searchparams['resource_id']),
-                new \DataWarehouse\Query\Model\Parameter("local_job_id", "=", $searchparams['local_job_id'])
-            );
-        }
+        $params = array(
+            new \DataWarehouse\Query\Model\Parameter("resource_id", "=", $resourceId),
+            new \DataWarehouse\Query\Model\Parameter("local_job_id", "=", $localJobId)
+        );
 
         $QueryClass = "\\DataWarehouse\\Query\\$realm\\JobDataset";
         $query = new $QueryClass($params, "brief");

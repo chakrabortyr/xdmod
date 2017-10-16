@@ -1,6 +1,6 @@
 {
     "name": "xdmod",
-    "version": "7.1.0",
+    "version": "6.6.0",
     "release": "1.0",
     "files": {
         "include_paths": [
@@ -11,6 +11,7 @@
             "/composer.json",
             "/composer.lock",
             "/docs",
+            "/etl",
             "/html/gui/js/modules/Module.template",
             "/logs",
             "/phpcs.xml",
@@ -21,15 +22,14 @@
         "exclude_patterns": [
             "#/\\.#",
             "#xdmod-.*\\.rpm$#",
-            "#xdmod-.*\\.tar\\.gz$#",
-            "#^\\/configuration\\/.+\\..+\\.template$#"
+            "#xdmod-.*\\.tar\\.gz$#"
         ]
     },
     "file_maps": {
         "data": [
             "classes",
             "db",
-            "etl",
+            "external_libraries",
             "html",
             "libraries",
             "reporting",
@@ -59,7 +59,6 @@
             "configuration/etl",
             "configuration/hierarchy.json",
             "configuration/internal_dashboard.json",
-            "configuration/linker.json",
             "configuration/organization.json",
             "configuration/portal_settings.ini",
             "configuration/processor_buckets.json",
@@ -72,10 +71,6 @@
             "configuration/setup.json",
             "configuration/update_check.json",
             "configuration/assets.json",
-            "configuration/modules.json",
-            "configuration/hierarchies.json",
-            {"configuration/hierarchies.d/xdmod.json": "hierarchies.d/xdmod.json"},
-            {"configuration/modules.d/xdmod.json": "modules.d/xdmod.json"},
             "email_templates"
         ],
         "etc/httpd": {

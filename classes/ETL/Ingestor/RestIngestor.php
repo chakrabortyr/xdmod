@@ -14,16 +14,15 @@ namespace ETL\Ingestor;
 
 use ETL\DataEndpoint\Rest;
 use ETL\DataEndpoint\aRdbmsEndpoint;
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
-use ETL\DbModel\Query;
+use ETL\DbEntity\Query;
 use ETL\aOptions;
 use ETL\iAction;
 use ETL\Utilities;
 
-use Log;
-use PDO;
-use Exception;
+use \Log;
+use \PDO;
 
 class RestIngestor extends aIngestor implements iAction
 {
@@ -107,7 +106,7 @@ class RestIngestor extends aIngestor implements iAction
         $this->etlDestinationTable = current($this->etlDestinationTableList);
         $etlTableKey = key($this->etlDestinationTableList);
         if ( count($this->etlDestinationTableList) > 1 ) {
-            $this->logger->warning($this . " does not support multiple ETL destination tables, using first table with key: '$etlTableKey'");
+            $logger->warning($this . " does not support multiple ETL destination tables, using first table with key: '$etlTableKey'");
         }
 
         // If the source query is specified in the definition file use it to obtain parameters for the
@@ -205,11 +204,11 @@ class RestIngestor extends aIngestor implements iAction
         // Verify that any type formatting directives in the request and response are valid
 
         foreach ( $this->parameterDirectives as $parameter => $directives ) {
-            $this->verifyVerifyDirective($parameter, $directives);
+            $this->verifyDirectives($parameter, $directives);
         }  // if ( isset($this->restRequestConfig->parameters) )
 
         foreach ( $this->responseDirectives as $key => $directives ) {
-            $this->verifyVerifyDirective($key, $directives);
+            $this->verifyDirectives($key, $directives);
         }  // if ( isset($this->restRequestConfig->field_map) )
 
         $this->initialized = true;
@@ -219,14 +218,25 @@ class RestIngestor extends aIngestor implements iAction
     }  // initialize()
 
     /* ------------------------------------------------------------------------------------------
-     * @see aAction::performPreExecuteTasks()
+     * @see aIngestor::performPreExecuteTasks()
      * ------------------------------------------------------------------------------------------
      */
 
     protected function performPreExecuteTasks()
     {
+        // ------------------------------------------------------------------------------------------
+        // This is not yet updated to fully support multiple ETL destination tables.
 
-        parent::performPreExecuteTasks();
+        try {
+
+            // Bring the destination table in line with the configuration if necessary.
+            // manageTable() is DRYRUN aware.
+
+            $this->manageTable($this->etlDestinationTable, $this->destinationEndpoint);
+
+        } catch ( Exception $e ) {
+            $this->logAndThrowException("Error managing ETL table for " . $this->getName() . ": " . $e->getMessage());
+        }
 
         $this->destinationTableColumnNames = $this->etlDestinationTable->getColumnNames();
 
@@ -246,7 +256,7 @@ class RestIngestor extends aIngestor implements iAction
 
         if ( null !== $this->etlSourceQuery ) {
 
-            $sql = $this->etlSourceQuery->getSql();
+            $sql = $this->etlSourceQuery->getSelectSql();
             if ( null !== $this->variableMap ) {
                 $sql = Utilities::substituteVariables(
                     $sql,
@@ -274,16 +284,38 @@ class RestIngestor extends aIngestor implements iAction
 
         $this->processParameters();
 
+        if ( "myisam" == strtolower($this->etlDestinationTable->getEngine()) ) {
+            // Disable keys for faster inserts
+            $qualifiedDestTableName = $this->etlDestinationTable->getFullName();
+            $sqlList = array("ALTER TABLE $qualifiedDestTableName DISABLE KEYS");
+            $this->executeSqlList($sqlList, $this->destinationEndpoint);
+        }
+
         return true;
 
     }  // performPreExecuteTasks()
+
+    /* ------------------------------------------------------------------------------------------
+     * @see aIngestor::performPostExecuteTasks()
+     * ------------------------------------------------------------------------------------------
+     */
+
+    protected function performPostExecuteTasks($numRecordsProcessed)
+    {
+        if ( "myisam" == strtolower($this->etlDestinationTable->getEngine()) ) {
+            $qualifiedDestTableName = $this->etlDestinationTable->getFullName();
+            $sqlList = array("ALTER TABLE $qualifiedDestTableName ENABLE KEYS");
+            $this->executeSqlList($sqlList, $this->destinationEndpoint);
+        }
+
+        return true;
+    }  // performPostExecuteTasks()
 
     /* ------------------------------------------------------------------------------------------
      * @see aIngestor::_execute()
      * ------------------------------------------------------------------------------------------
      */
 
-     // @codingStandardsIgnoreLine
     protected function _execute()
     {
         // Support a source query, mapping from the source to rest parameters, rest field map
@@ -379,10 +411,6 @@ class RestIngestor extends aIngestor implements iAction
             }  // if ( $responseKey !== null )
 
             // If a results key was specified, grab the response under that key.
-
-            $results = null;
-            $columnToResultFieldMap = array();
-            $numColumns = 0;
 
             if ( null !== $resultsKey ) {
                 if ( ! isset($response->$resultsKey) ) {
@@ -543,7 +571,7 @@ class RestIngestor extends aIngestor implements iAction
         }  // while ( false !== ( $retval = curl_exec($this->sourceHandle) ) )
 
         if ( 0 != curl_errno($this->sourceHandle) ) {
-            $this->logAndThrowException(curl_error($this->sourceHandle));
+            $this->logAndThrowException(curl_error());
         }
 
         $this->logger->info("Made $numRequestsMade REST requests");
@@ -709,10 +737,7 @@ class RestIngestor extends aIngestor implements iAction
 
             // Continue pulling from the source query until we reach the end or we pass parameter verification
 
-            $row = false;
-
             while ( false !== ($row = $this->etlSourceQueryResult->fetch(PDO::FETCH_ASSOC)) ) {
-
 
                 foreach( $row as $k => $v ) {
                     $this->setParameter($k, $v);

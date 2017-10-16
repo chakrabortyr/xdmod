@@ -126,14 +126,5 @@ EOT
         }
 
         $this->saveIniConfig($settings, 'portal_settings');
-
-        $aclSetup = new AclSetup($this->console);
-        $aclSetup->handle();
-
-        $aclConfig = new AclConfig($this->console);
-        $aclConfig->handle();
-
-        $aclImport = new AclImportXdmod($this->console);
-        $aclImport->handle();
     }
 }

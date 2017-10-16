@@ -29,7 +29,6 @@ class MetricExplorer extends Common
             array(
                 'svg',
                 'png',
-                'pdf',
                 'png_inline',
                 'svg_inline',
                 'xml',
@@ -141,7 +140,6 @@ class MetricExplorer extends Common
         if (
             $format === 'hc_jsonstore'
             || $format === 'png'
-            || $format === 'pdf'
             || $format === 'svg'
             || $format === 'png_inline'
             || $format === 'svg_inline'
