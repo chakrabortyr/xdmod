@@ -120,6 +120,7 @@ class MetricExplorerControllerProvider extends BaseControllerProvider
 
                 foreach ($data as &$query) {
                     $this->removeRoleFromQuery($user, $query);
+                    $query['name'] = htmlspecialchars($query['name'], ENT_COMPAT, 'UTF-8', false);
                 }
 
                 $payload['data'] = $data;
@@ -171,6 +172,7 @@ class MetricExplorerControllerProvider extends BaseControllerProvider
 
                 if (isset($query)) {
                     $payload['data'] = $query;
+                    $payload['data']['name'] = htmlspecialchars($query['name'], ENT_COMPAT, 'UTF-8', false);
                     $payload['success'] = true;
                     $statusCode = 200;
                 } else {
@@ -256,6 +258,7 @@ class MetricExplorerControllerProvider extends BaseControllerProvider
      * values of the following form params ( if provided ):
      *   - name
      *   - config
+     *   - timestamp
      *
      * @param Request $request
      * @param Application $app
@@ -286,13 +289,18 @@ class MetricExplorerControllerProvider extends BaseControllerProvider
                         $jsonData = json_decode($data, true);
                         $name = isset($jsonData['name']) ? $jsonData['name'] : null;
                         $config = isset($jsonData['config']) ? $jsonData['config'] : null;
+                        $ts = isset($jsonData['ts']) ? $jsonData['ts'] : microtime(true);
                     } else {
                         $name = $this->getStringParam($request, 'name');
                         $config = $this->getStringParam($request, 'config');
+                        $ts = $this->getDateTimeFromUnixParam($request, 'ts');
                     }
 
                     if (isset($name)) $query['name'] = $name;
                     if (isset($config)) $query['config'] = $config;
+                    if (isset($ts)) {
+                        $query['ts'] = $ts;
+                    }
 
                     $queries->upsert($id, $query);
 

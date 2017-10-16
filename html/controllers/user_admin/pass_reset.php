@@ -1,5 +1,7 @@
 <?php
 
+use CCR\MailWrapper;
+
 // Operation: user_admin->pass_reset
 
 $params = array('uid' => RESTRICTION_UID);
@@ -24,33 +26,33 @@ if ($user_to_email == NULL) {
 
 // -----------------------------
 
-$page_title = xd_utilities\getConfiguration('general', 'title');
-$mailer_sender = xd_utilities\getConfiguration('mailer', 'sender_email');
-
-$recipient
-    = (xd_utilities\getConfiguration('general', 'debug_mode') == 'on')
-    ? xd_utilities\getConfiguration('general', 'debug_recipient')
-    : $user_to_email->getEmailAddress();
-
-// -------------------
-
-$mail = ZendMailWrapper::init();
-$mail->setFrom($mailer_sender, 'XDMoD');
-$mail->setSubject("$page_title: Password Reset");
-$mail->addTo($recipient);
-
-// -------------------
-
-$message = MailTemplates::passwordReset($user_to_email);
-
-$mail->setBodyText($message);
+$page_title = \xd_utilities\getConfiguration('general', 'title');
 
 // -------------------
 
 try {
-    $mail->send();
+    $userName = $user_to_email->getUsername();
+
+    $rid = md5($userName . $user_to_email->getPasswordLastUpdatedTimestamp());
+
+    $site_address
+        = \xd_utilities\getConfigurationUrlBase('general', 'site_address');
+    $resetUrl = "${site_address}password_reset.php?rid=$rid";
+
+    MailWrapper::sendTemplate(
+        'password_reset',
+        array(
+            'first_name'           => $user_to_email->getFirstName(),
+            'username'             => $userName,
+            'reset_url'            => $resetUrl,
+            'maintainer_signature' => MailWrapper::getMaintainerSignature(),
+            'subject'              => "$page_title: Password Reset",
+            'toAddress'            => $user_to_email->getEmailAddress()
+        )
+    );
+
     $returnData['success'] = true;
-    $returnData['status'] = "Password reset e-mail sent to user {$user_to_email->getUsername()}";
+    $returnData['status'] = "Password reset e-mail sent to user {$userName}";
     $returnData['message'] = $returnData['status'];
 }
 catch (Exception $e) {

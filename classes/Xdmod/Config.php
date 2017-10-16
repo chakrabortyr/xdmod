@@ -24,6 +24,13 @@ class Config implements ArrayAccess
     private $sections = array();
 
     /**
+     * Config data by module by section
+     *
+     * @var array
+     **/
+    private $moduleSections = array();
+
+    /**
      * Private constructor for factory pattern.
      */
     private function __construct()
@@ -84,6 +91,19 @@ class Config implements ArrayAccess
     }
 
     /**
+     * Attempt to retrieve the configuration data for the specified section.
+     *
+     * @param string $section the section to retrieve
+     **/
+    public function getModuleSection($section)
+    {
+        if (!isset($this->moduleSections[$section])) {
+            $this->moduleSections[$section] = $this->loadModuleSection($section);
+        }
+        return $this->moduleSections[$section];
+    }
+
+    /**
      * Load a config section from a file.
      *
      * @param string $section The name of the config section.
@@ -104,6 +124,97 @@ class Config implements ArrayAccess
         }
 
         return $data;
+    }
+
+    /**
+     * Load a section in a module aware fashion. This means that the section
+     * data is returned for each module that is currently installed.
+     *
+     * @param string $section
+     *
+     * @return mixed
+     **/
+    private function loadModuleSection($section)
+    {
+        $results = array();
+
+        $file = $this->getFilePath($section);
+
+        $data = Json::loadFile($file);
+
+        $results[DEFAULT_MODULE_NAME] = $data;
+
+        $partialFiles = $this->getPartialFilePaths($section);
+
+        foreach($partialFiles as $file) {
+            $module = $this->getModule(pathinfo($file, PATHINFO_FILENAME));
+
+            $partialData = Json::loadFile($file);
+            if (isset($results[$module]) && is_array($results[$module])) {
+                $results[$module] = array_merge($results[$module], $this->sanitizeKeys($partialData));
+            } else {
+                $results[$module] = $this->sanitizeKeys($partialData);
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Attempt to retrieve the module name from a specified file name.  This is done by first
+     * removing the file extension (typically ".json") and then checking for a submodule delimiter
+     * (:) and returning the portion of the filename before the delimiter, or the filename if
+     * no delimiter was present.
+     *
+     * For example:
+     * value-analytics.json will return "value-analytics"
+     * supremm:job-viewer.json will return "supremm"
+     *
+     * @param string $fileName the file name to be parsed.
+     *
+     * @return string
+     **/
+    private function getModule($fileName)
+    {
+        // Remove the extension (which _should_ be .json but could be capitalized)
+        if ( false !== ($extIndex = strrpos($fileName, '.')) ) {
+            $results = substr($fileName, 0, strlen($fileName) - $extIndex);
+        } else {
+            $results = $fileName;
+        }
+
+        // If there is a sub-module delimiter then take the portion before
+        if ( false !== ($index = strpos($results, ':')) ) {
+            $results = substr($results, 0, $index);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Attempt to walk the provided array and if there are any keys with that
+     * start with a '+' character, replace that key with that keys value minus
+     * the '+' character.
+     *
+     * @param array $data the data whose keys will be sanitized
+     *
+     * @return array
+     **/
+    private function sanitizeKeys($data)
+    {
+        $results = array();
+
+        foreach($data as $key => $value) {
+            $hasPlus = substr($key, 0, 1) === '+';
+            $newKey = false === $hasPlus ? $key : substr($key, 1);
+            if (is_array($value) && $this->isAssocArray($value)) {
+                $results[$newKey] = $this->sanitizeKeys($value);
+            } else {
+                $results[$newKey] = $value;
+            }
+        }
+
+        return $results;
     }
 
     /**
@@ -199,7 +310,12 @@ class Config implements ArrayAccess
                 // If the key starts with a "+", merge the values.
 
                 $mainKey   = substr($key, 1);
-                $mainValue = $data[$mainKey];
+                if (array_key_exists($mainKey, $data)){
+                    $mainValue = $data[$mainKey];
+                }
+                else {
+                    $mainValue = null;
+                }
 
                 if (!is_array($mainValue)) {
                     $msg

@@ -9,6 +9,7 @@
 
 namespace ETL;
 
+use ETL\Configuration\EtlConfiguration;
 use Exception;
 use stdClass;
 
@@ -29,6 +30,21 @@ class Utilities
     {
         self::$etlConfig = $config;
     }  // setEtlConfig
+
+    /**
+     * Determine if a string contains a variable or macro.  A variable or macro is a string wrapped
+     * in ${}. For example, ${RESOURCE}.
+     *
+     * *
+     * @param string $string The string to check
+     *
+     * @return boolean TRUE if $string contains a variable or macro.
+     */
+
+    public static function containsVariable($string)
+    {
+        return 1 === preg_match('/\$\{.+\}/', $string);
+    }  // containsVariable()
 
     /* ------------------------------------------------------------------------------------------
      * Perform variable/macro substitution on a string using a variable map. The map keys
@@ -66,6 +82,10 @@ class Utilities
         $exceptionPrefix = null,
         array $substitutionDetails = null
     ) {
+
+        if ( null === $string ) {
+            return $string;
+        }
 
         $exceptionForUnusedVariables = ( null !== $logger );
         $trackDetails = ( null !== $substitutionDetails );

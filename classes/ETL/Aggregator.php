@@ -10,9 +10,10 @@
 
 namespace ETL;
 
+use ETL\Configuration\EtlConfiguration;
 use ETL\Aggregator\AggregatorOptions;
-use \Exception;
-use \Log;
+use Exception;
+use Log;
 
 class Aggregator
 {
@@ -82,5 +83,4 @@ class Aggregator
         return $aggregator;
 
     }  // factory()
-
 }  // class Aggregator

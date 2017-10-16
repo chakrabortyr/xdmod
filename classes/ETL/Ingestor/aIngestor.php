@@ -14,9 +14,9 @@ namespace ETL\Ingestor;
 
 use ETL\aRdbmsDestinationAction;
 use ETL\EtlOverseerOptions;
-use ETL\EtlConfiguration;
+use ETL\Configuration\EtlConfiguration;
 use ETL\aOptions;
-use \Log;
+use Log;
 
 abstract class aIngestor extends aRdbmsDestinationAction
 {
@@ -119,6 +119,10 @@ abstract class aIngestor extends aRdbmsDestinationAction
                 );
                 $this->variableMap = array_merge($this->variableMap, $localVariableMap);
 
+                $this->logger->debug(
+                    sprintf("Available Variables: %s", $this->getVariableMapDebugString())
+                );
+
                 $numRecordsProcessed = $this->_execute();
                 $totalRecordsProcessed += $numRecordsProcessed;
                 $intervalNum++;
@@ -149,33 +153,7 @@ abstract class aIngestor extends aRdbmsDestinationAction
                                   'records_examined' => $totalRecordsProcessed,
                                   'records_loaded'   => $totalRecordsProcessed
                                   ));
-    }
-
-    /* ------------------------------------------------------------------------------------------
-     * Perform any pre-execution tasks. For example, disabling table keys on MyISAM tables, or other
-     * setup tasks.
-     *
-     * NOTE: This method must check if we are in DRYRUN mode before executing any tasks.
-     *
-     * @return true on success
-     * ------------------------------------------------------------------------------------------
-     */
-
-    abstract protected function performPreExecuteTasks();
-
-    /* ------------------------------------------------------------------------------------------
-     * Perform any post-execution tasks. For example, enabling table keys on MyISAM tables, or
-     * tracking table history.
-     *
-     * NOTE: This method must check if we are in DRYRUN mode before executing any tasks.
-     *
-     * @param $numRecordsProcessed The number of records processed during this period.
-     *
-     * @return true on success
-     * ------------------------------------------------------------------------------------------
-     */
-
-    abstract protected function performPostExecuteTasks($numRecordsProcessed);
+    }  // execute()
 
     /* ------------------------------------------------------------------------------------------
      * Perform the actual work of ingestion.
@@ -184,5 +162,6 @@ abstract class aIngestor extends aRdbmsDestinationAction
      * ------------------------------------------------------------------------------------------
      */
 
+    // @codingStandardsIgnoreLine
     abstract protected function _execute();
 }  // abstract class aIngestor

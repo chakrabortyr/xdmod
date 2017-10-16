@@ -8,6 +8,8 @@
 
 require_once __DIR__ . '/../../configuration/linker.php';
 
+ini_set('memory_limit', -1);
+
 use CCR\Log;
 use OpenXdmod\Build\Packager;
 
@@ -47,9 +49,19 @@ function main()
 
     $shortOptions = implode(
         '',
-        array_map(function ($opt) { return $opt[0]; }, $opts)
+        array_map(
+            function ($opt) {
+                return $opt[0];
+            },
+            $opts
+        )
     );
-    $longOptions = array_map(function ($opt) { return $opt[1]; }, $opts);
+    $longOptions = array_map(
+        function ($opt) {
+            return $opt[1];
+        },
+        $opts
+    );
 
     $args = getopt($shortOptions, $longOptions);
 
@@ -110,7 +122,9 @@ function main()
         exit;
     }
 
-    if ($logLevel === -1) { $logLevel = Log::NOTICE; }
+    if ($logLevel === -1) {
+        $logLevel = Log::NOTICE;
+    }
 
     $conf = array(
         'file'            => false,

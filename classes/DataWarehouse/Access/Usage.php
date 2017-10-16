@@ -466,6 +466,7 @@ class Usage extends Common
             $usageShowGradient = \xd_utilities\array_get($this->request, 'show_gradient', 'y');
             $usageShowGradient = $usageShowGradient === 'true' || $usageShowGradient === 'y';
             $thumbnailRequested = \xd_utilities\array_get($this->request, 'thumbnail', 'n') === 'y';
+            $showTitle = \xd_utilities\array_get($this->request, 'show_title', 'y');
 
             // Generate the chart settings that will be returned with each chart.
             $usageChartSettings = array(
@@ -482,10 +483,9 @@ class Usage extends Common
                 'show_aggregate_labels' =>  \xd_utilities\array_get($this->request, 'show_aggregate_labels', $usageGroupByObject->getDefaultShowAggregateLabels()),
                 'show_error_labels' =>      \xd_utilities\array_get($this->request, 'show_error_labels', $usageGroupByObject->getDefaultShowErrorLabels()),
                 'hide_tooltip' =>           \xd_utilities\array_get($this->request, 'hide_tooltip', false),
-                'enable_errors' =>          \xd_utilities\array_get($this->request, 'enable_errors', $usageGroupByObject->getDefaultEnableErrors()),
+                'enable_errors' =>          'n',
                 'enable_trend_line' =>      \xd_utilities\array_get($this->request, 'enable_trend_line', $usageGroupByObject->getDefaultEnableTrendLine()),
             );
-            $usageChartSettingsJson = json_encode($usageChartSettings);
 
             $usageSubnotes = array();
             if ($usageGroupBy === 'resource' || array_key_exists('resource', $this->request)) {
@@ -521,6 +521,11 @@ class Usage extends Common
                 // Get the statistic object used by this chart request.
                 $meRequestMetric = $usageRealmAggregateClass::getStatistic($meRequest['data_series_unencoded'][0]['metric']);
 
+                $errorstat = 'sem_' . $meRequest['data_series_unencoded'][0]['metric'];
+                if (in_array($errorstat, array_keys($usageRealmAggregateClass::getRegisteredStatistics())) ) {
+                    $usageChartSettings['enable_errors'] = 'y';
+                }
+
                 // Get the chart object from the response.
                 $meChart = &$meResponseContent['data'][0];
 
@@ -543,10 +548,6 @@ class Usage extends Common
                 // from this adapter, the chart's subtitle is placed in the title.
                 $usageChartSubtitle = $usageSubtitle !== null ? $usageSubtitle : $meChart['title']['text'];
 
-                // Only include the subtitle on the chart if the chart is not a
-                // thumbnail.
-                $meChart['subtitle']['text'] = $thumbnailRequested ? '' : $usageChartSubtitle;
-
                 // Generate the title and short title of this chart.
                 $usageChartShortTitle = $meRequestMetric->getLabel();
                 if ($usageTitle !== null) {
@@ -558,18 +559,39 @@ class Usage extends Common
                     }
                 }
 
-                // If a thumbnail was requested, do not use an in-chart title.
+                // If a thumbnail was requested, do not use an in-chart title or subtitle.
                 // Otherwise, use one.
                 if ($thumbnailRequested) {
                     $meChart['title']['text'] = '';
+                    $meChart['subtitle']['text'] = '';
                 } else {
                     // If a title was provided, display that. Otherwise, use the
                     // generated title.
                     $meChart['title']['text'] = $usageChartTitle;
+                    $meChart['subtitle']['text'] = $usageChartSubtitle;
                 }
 
                 // Set the title style.
                 $meChart['title']['style'] = $usageTitleStyle;
+
+                // If the "Show Title" checkbox on the Export Dialog has not been ticked,
+                // do not show a chart title. However, the Metric Explorer promotes the
+                // subtitle to the title if it exists and the title is not shown so mimic
+                // this behavior for consistency. See HighChart2::setChartTitleSubtitle()
+
+                if ( 'n' == $showTitle ) {
+                    // The subtitle text is empty for thumbnails but above it is set to
+                    // the value of the 'subtitle' parameter or the chart title if the
+                    // parameter isn't present. Keep this check in here in case that
+                    // changes.
+
+                    if ( isset($meChart['subtitle']['text']) && '' != $meChart['subtitle']['text'] ) {
+                        $meChart['title']['text'] = $meChart['subtitle']['text'];
+                        $meChart['subtitle']['text'] = '';
+                    } else {
+                        $meChart['title']['text'] = '';
+                    }
+                }
 
                 // Generate the expected IDs for the chart.
                 $usageMetric = $meRequest['data_series_unencoded'][0]['metric'];
@@ -732,13 +754,21 @@ class Usage extends Common
                     // If this is not a trend line series and not a thumbnail,
                     // fill in the drilldown function.
                     if (!$isTrendLineSeries && !$thumbnailRequested) {
-                        $drillDowns = implode(',', $user->getMostPrivilegedRole()->getQueryDescripters(
-                            'tg_usage',
-                            $usageRealm,
-                            $usageGroupBy,
-                            $meRequestMetric->getAlias()->getName()
-                        )->getDrillTargets($meRequestMetric->getAlias()));
+                        $drillDowns = json_encode(
+                            array_map(
+                                function ($drillTarget) {
+                                    return explode('-', $drillTarget, 2);
+                                },
+                                $user->getMostPrivilegedRole()->getQueryDescripters(
+                                    'tg_usage',
+                                    $usageRealm,
+                                    $usageGroupBy,
+                                    $meRequestMetric->getAlias()->getName()
+                                )->getDrillTargets($meRequestMetric->getAlias())
+                            )
+                        );
                         $usageGroupByUnit = $usageGroupByObject->getUnit();
+                        $groupByNameAndUnit = json_encode(array($usageGroupBy, $usageGroupByUnit));
 
                         if ($meRequestIsTimeseries) {
                             $drilldownDetails = $meDataSeries['drilldown'];
@@ -748,8 +778,8 @@ class Usage extends Common
                                 this.ts = this.x;
                                 XDMoD.Module.Usage.drillChart(
                                     this,
-                                    '$drillDowns',
-                                    '${usageGroupBy}-${usageGroupByUnit}',
+                                    $drillDowns,
+                                    $groupByNameAndUnit,
                                     '$drilldownId',
                                     $drilldownLabel,
                                     'none',
@@ -763,8 +793,8 @@ class Usage extends Common
                                 var label = this.drilldown.label;
                                 XDMoD.Module.Usage.drillChart(
                                     this,
-                                    '$drillDowns',
-                                    '${usageGroupBy}-${usageGroupByUnit}',
+                                    $drillDowns,
+                                    $groupByNameAndUnit,
                                     id,
                                     label,
                                     'none',
@@ -798,6 +828,10 @@ class Usage extends Common
                     }
                 });
 
+                if ('n' == $usageGroupByObject->getDefaultEnableErrors()) {
+                    $usageChartSettings['enable_errors'] = 'n';
+                }
+
                 // Create a Usage-style chart.
                 $usageChart = array(
                     'hc_jsonstore' => $meChart,
@@ -820,7 +854,7 @@ class Usage extends Common
                     'realm' => $usageRealm,
                     'start_date' => $this->request['start_date'],
                     'end_date' => $this->request['end_date'],
-                    'chart_settings' => $usageChartSettingsJson,
+                    'chart_settings' => json_encode($usageChartSettings),
                     'show_gradient' => $usageShowGradient,
                     'final_width' => $usageWidth,
                     'final_height' => $usageHeight - 4,

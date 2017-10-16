@@ -1,5 +1,6 @@
 <?php
 
+use CCR\MailWrapper;
 use CCR\DB;
 
 // Operation: mailer->sign_up
@@ -88,22 +89,6 @@ $pdo->execute(
 
 // Create email.
 
-$mail = ZendMailWrapper::init();
-
-$recipient
-    = (xd_utilities\getConfiguration('general', 'debug_mode') == 'on')
-    ? xd_utilities\getConfiguration('general', 'debug_recipient')
-    : xd_utilities\getConfiguration('general', 'contact_page_recipient');
-$mail->addTo($recipient);
-
-// Original sender's e-mail must be in the "From" field for the XDMoD
-// Request Tracker to function
-$mail->setFrom($_POST['email']);
-$mail->setReplyTo($_POST['email']);
-
-$title = xd_utilities\getConfiguration('general', 'title');
-$mail->setSubject("[$title] A visitor has signed up");
-
 $time_requested = date('D, F j, Y \a\t g:i A');
 $organization   = ORGANIZATION_NAME;
 
@@ -124,14 +109,19 @@ Affiliation with $organization:
 {$_POST['additional_information']}
 
 EOMSG;
-$mail->setBodyText($message);
-
-// Send email.
 
 $response = array();
 
+// Original sender's e-mail must be in the "fromAddress" field for the XDMoD Request Tracker to function
 try {
-    $mail->send();
+    MailWrapper::sendMail(array(
+        'body'         => $message,
+        'subject'      => "[" . \xd_utilities\getConfiguration('general', 'title') . "] A visitor has signed up",
+        'toAddress'    => \xd_utilities\getConfiguration('general', 'contact_page_recipient'),
+        'fromAddress'  => $_POST['email'],
+        'fromName'     => $_POST['last_name'] . ', ' . $_POST['first_name'],
+        'replyAddress' => \xd_utilities\getConfiguration('mailer', 'sender_email')
+    ));
     $response['success'] = true;
 }
 catch (Exception $e) {

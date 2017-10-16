@@ -11,40 +11,32 @@
 namespace ETL\Ingestor;
 
 use stdClass;
+use Exception;
+use PDOException;
+use Log;
 
 use ETL\iAction;
-use ETL\EtlConfiguration;
-use ETL\EtlOverseerOptions;
-use ETL\aRdbmsDestinationAction;
 use ETL\aOptions;
-use ETL\DataEndpoint\StructuredFile;
-use \Log;
+use ETL\Configuration\EtlConfiguration;
+use ETL\EtlOverseerOptions;
+use ETL\Utilities;
+use ETL\aRdbmsDestinationAction;
+use ETL\DataEndpoint\iStructuredFile;
 
 class StructuredFileIngestor extends aIngestor implements iAction
 {
-    /**
-     * Execution data set up by this ingestor's pre-execution tasks.
+    /** -----------------------------------------------------------------------------------------
+     * The custom insert values component is an object that allows us to specify a
+     * subquery to use when inserting data rather than the raw source value. If the
+     * destination column is present as a key in the object, the key's value will be used.
      *
-     * The pre-execution function creates an array with these keys:
-     *   - destColumns: A numeric array of destination columns.
-     *   - destColumnsToSourceKeys: An array mapping destination columns to
-     *                              the corresponding keys in the source data.
-     *   - sourceValues: An array of values to be ingested during execution.
-     *   - customInsertValuesComponents: An object containing replacement SQL
-     *                                   for the standard placeholders in the
-     *                                   INSERT statement for the destination
-     *                                   columns specified in the
-     *                                   configuration file.
-     *
-     * @var array
+     * @var array|null
+     * ------------------------------------------------------------------------------------------
      */
-    protected $executionData;
 
-    // This action does not (yet) support multiple destination tables. If multiple destination
-    // tables are present, store the first here and use it.
-    protected $etlDestinationTable = null;
+    protected $customInsertValuesComponents = null;
 
-    /* ------------------------------------------------------------------------------------------
+    /** -----------------------------------------------------------------------------------------
      * @see iAction::__construct()
      * ------------------------------------------------------------------------------------------
      */
@@ -52,12 +44,10 @@ class StructuredFileIngestor extends aIngestor implements iAction
     public function __construct(aOptions $options, EtlConfiguration $etlConfig, Log $logger = null)
     {
         parent::__construct($options, $etlConfig, $logger);
-
     }  // __construct()
 
-    /* ------------------------------------------------------------------------------------------
-     * Initialize data required to perform the action. This should be called after the constructor and
-     * as part of the verification process.
+    /** -----------------------------------------------------------------------------------------
+     * @see iAction::initialize()
      *
      * @throws Exception if any query data was not int the correct format.
      * ------------------------------------------------------------------------------------------
@@ -73,65 +63,14 @@ class StructuredFileIngestor extends aIngestor implements iAction
 
         parent::initialize($etlOverseerOptions);
 
-        // This ingestor supports an explicit source data endpoint of StructuredFile or
-        // JSON data specified directly in the definition file using the source_values
-        // key. If the source_values key is present, ignore the source endpoint as the
-        // data will have already been parsed.
-
-        if ( isset($this->parsedDefinitionFile->source_values) ) {
-            $this->sourceEndpoint = null;
-            $this->sourceHandle = null;
-        } elseif ( $this->options->source !== null && ! $this->options->ignore_source ) {
-            if ( ! $this->sourceEndpoint instanceof StructuredFile ) {
-                $msg = "Source is not an instance of ETL\\DataEndpoint\\StructuredFile";
-                $this->logAndThrowException($msg);
-            }
-        }
-
-        // This action only supports 1 destination table so use the first one and log a warning if
-        // there are multiple.
-
-        reset($this->etlDestinationTableList);
-        $this->etlDestinationTable = current($this->etlDestinationTableList);
-        $etlTableKey = key($this->etlDestinationTableList);
-        if ( count($this->etlDestinationTableList) > 1 ) {
-            $msg = $this . " does not support multiple ETL destination tables, using first table with key: '$etlTableKey'";
-            $logger->warning($msg);
-        }
-
-        if ( ! isset($this->parsedDefinitionFile->destination_columns) ) {
-            $msg = "destination_columns key not present in definition file: " . $this->definitionFile;
-            $this->logAndThrowException($msg);
-        }
-
-        $destinationColumns = $this->parsedDefinitionFile->destination_columns;
-        if (is_object($destinationColumns)) {
-            $destinationColumns = array_keys(get_object_vars(
-                $destinationColumns
-            ));
-        } elseif (! is_array($destinationColumns)) {
-            $msg = "destination_columns is invalid format: " . $this->definitionFile;
-            $this->logAndThrowException($msg);
-        }
-
-        if (
-            ! $this->sourceEndpoint
-            && ! isset($this->parsedDefinitionFile->source_values)
-        ) {
-            $msg = "source file not configured and (default) source values not in definition file";
-            $this->logAndThrowException($msg);
-        }
-
-        // Verify that the columns exist
-        $missingColumnNames = array_diff(
-            $destinationColumns,
-            $this->etlDestinationTable->getColumnNames()
-        );
-
-        if ( 0 != count($missingColumnNames) ) {
-            $msg = "The following columns from the data file were not found in table " . $this->etlDestinationTable->getFullName() . ": " .
-                implode(", ", $missingColumnNames);
-            $this->logAndThrowException($msg);
+        if ( ! $this->sourceEndpoint instanceof iStructuredFile ) {
+            $this->logAndThrowException(
+                sprintf(
+                    "Source endpoint %s does not implement %s",
+                    get_class($this->sourceEndpoint),
+                    "ETL\\DataEndpoint\\iStructuredFile"
+                )
+            );
         }
 
         $this->initialized = true;
@@ -140,184 +79,340 @@ class StructuredFileIngestor extends aIngestor implements iAction
 
     }  // initialize()
 
-    /**
+    /** -----------------------------------------------------------------------------------------
      * @see aIngestor::_execute()
+     * ------------------------------------------------------------------------------------------
      */
+
+    // @codingStandardsIgnoreLine
     protected function _execute()
     {
-        $destColumns = $this->executionData['destColumns'];
-        $destColumnsToSourceKeys = $this->executionData['destColumnsToSourceKeys'];
-        $sourceValues = $this->executionData['sourceValues'];
-        $customInsertValuesComponents = $this->executionData['customInsertValuesComponents'];
+        $numRecords = 0;
+        $insertStatements = array();
 
-        $numColumns = count($destColumns);
-        $numRecords = count($sourceValues);
+        // We will need to get the record fields from the source data. This happens after the first
+        // record is parsed.
 
-        // Insert data for each column.
-        //
-        // NOTE: Null values will not overwrite non-null values in the database.
-        // This is done to handle destinations that can be populated by
-        // multiple sources with varying levels of detail.
-        $valuesComponents = array_map(function ($destColumn) use ($customInsertValuesComponents) {
-            return (
-                property_exists($customInsertValuesComponents, $destColumn)
-                ? $customInsertValuesComponents->$destColumn
-                : '?'
+        $firstRecord = $this->sourceEndpoint->parse();
+
+        // If there are no records we can bail out. Otherwise we may not even be able to infer the
+        // source field names.
+
+        if ( 0 == $this->sourceEndpoint->count() ) {
+            $this->logger->info(
+                sprintf("Source endpoint %s returned 0 records, skipping.", $this->sourceEndpoint)
             );
-        }, $destColumns);
+            return $numRecords;
+        }
 
-        $sql = "INSERT INTO " . $this->etlDestinationTable->getFullName() . " (" .
-            implode(",", $destColumns) .
-            ") VALUES (" .
-            implode(",", $valuesComponents) .
-            ") ON DUPLICATE KEY UPDATE " .
-            implode(", ", array_map(function ($destColumn) {
-                return "$destColumn = COALESCE(VALUES($destColumn), $destColumn)";
-            }, $destColumns))
-        ;
+        $recordFieldNames = $this->sourceEndpoint->getRecordFieldNames();
 
-        $this->logger->debug("Insert query " . $this->destinationEndpoint . ":\n$sql");
+        $this->logger->debug(
+            sprintf("Requested %d record fields: %s", count($recordFieldNames), implode(', ', $recordFieldNames))
+        );
 
-        if ( ! $this->getEtlOverseerOptions()->isDryrun() ) {
+        if ( 0 == count($recordFieldNames) ) {
+            return $numRecords;
+        }
+
+        $this->parseDestinationFieldMap($recordFieldNames, $this->sourceEndpoint);
+
+        // The custom_insert_values_components option is an object that allows us to specify a
+        // subquery to use when inserting data rather than the raw source value. If the destination
+        // column is present as a key in the object, use the subquery, otherwise use "?" as a
+        // placeholder. Note that the raw value will be provided to the subquery and it should
+        // contain a single "?" placeholder.
+        //
+        // NOTE: Null values will not overwrite non-null values in the database. This is done to
+        // handle destinations that can be populated by multiple sources with varying levels of
+        // detail.
+
+        $customInsertValuesComponents = $this->customInsertValuesComponents;
+
+        // The destination field map may specify that the same source field is mapped to multiple
+        // destination fields and the order that the source record fields are returned may be
+        // different from the order the fields were specified in the map. For each destination
+        // table, maintain a mapping between the field position in the map (index) and the source
+        // fields so we cam properly build the SQL parameter list in the proper order. At the same
+        // time generate other data structures that will be needed later.
+
+        $destinationFieldIdToSourceFieldMap = array();
+
+        // Templates for source field values containing pre-determined values such as variables or
+        // macros
+        $sourceFieldToValueMapTemplate = array();
+
+        // Scalar source fields that map to source fields
+        $simpleSourceFields = array();
+
+        // Complex source fields that must be evaluated by the source endpoint
+        $complexSourceFields = array();
+
+        // Variables or macros that will be substituted
+        $variableSourceFields = array();
+
+        // Iterate over the destination field mappings rather than the destination table list because it
+        // is possible that a table definition is provided but no data is mapped to it.
+
+        $this->logger->debug("Processing destination field map");
+
+        foreach ( $this->destinationFieldMappings as $etlTableKey => $destFieldToSourceFieldMap ) {
+            $destinationFields = array_keys($destFieldToSourceFieldMap);
+
+            // Create a mapping from the source fields to the all of the destination field indexes
+            // they correspond to. At the same time, split the source fileds into lists of simple
+            // and complex fields.
+
+            $simpleSourceFields[$etlTableKey] = array();
+            $complexSourceFields[$etlTableKey] = array();
+            $variableSourceFields[$etlTableKey] = array();
+            $destinationFieldIdToSourceFieldMap[$etlTableKey] = array();
+
+            foreach ( array_values($destFieldToSourceFieldMap) as $index => $sourceField ){
+                $destinationFieldIdToSourceFieldMap[$etlTableKey][$index] = $sourceField;
+                if (
+                    $this->sourceEndpoint->supportsComplexDataRecords()
+                    && $this->sourceEndpoint->isComplexSourceField($sourceField)
+                ) {
+                    $complexSourceFields[$etlTableKey][] = $sourceField;
+                } elseif ( Utilities::containsVariable($sourceField) ) {
+                    $variableSourceFields[$etlTableKey][] = $sourceField;
+                } else {
+                    $simpleSourceFields[$etlTableKey][] = $sourceField;
+                }
+            }
+
+            $valuesComponents = array_map(
+                function ($destField) use ($customInsertValuesComponents) {
+                    return ( property_exists($customInsertValuesComponents, $destField)
+                             ? $customInsertValuesComponents->$destField
+                             : '?' );
+                },
+                $destinationFields
+            );
+
+            // Generate one SQL statement per destination table
+
+            $sql = sprintf(
+                'INSERT INTO %s (%s) VALUES (%s) ON DUPLICATE KEY UPDATE %s',
+                $this->etlDestinationTableList[$etlTableKey]->getFullName(),
+                implode(', ', $destinationFields),
+                implode(', ', $valuesComponents),
+                implode(', ', array_map(
+                    function ($destField) {
+                        return "$destField = COALESCE(VALUES($destField), $destField)";
+                    },
+                    array_keys($destFieldToSourceFieldMap)
+                ))
+            );
+
             try {
-                $insertStatement = $this->destinationHandle->prepare($sql);
-
-                foreach ( $sourceValues as $sourceValue ) {
-                    $insertStatement->execute($this->convertSourceValueToRow(
-                        $sourceValue,
-                        $destColumns,
-                        $destColumnsToSourceKeys
-                    ));
+                $this->logger->debug(
+                    sprintf("Insert SQL for table key '%s':\n%s", $etlTableKey, $sql)
+                );
+                if ( ! $this->getEtlOverseerOptions()->isDryrun() ) {
+                    $insertStatements[$etlTableKey] = $this->destinationHandle->prepare($sql);
                 }
             } catch (PDOException $e) {
                 $this->logAndThrowException(
-                    "Error inserting file data",
+                    "Error preparing insert statement for table key '$etlTableKey'",
                     array('exception' => $e, 'endpoint' => $this)
                 );
             }
+
+            // If there are source fields that are variables or macros, evaluate them once here and
+            // save them to a reusable template.
+
+            $sourceFieldToValueMapTemplate[$etlTableKey] = array();
+
+            if ( 0 != count($variableSourceFields[$etlTableKey]) ) {
+                foreach ( $variableSourceFields[$etlTableKey] as $variable ) {
+                    $sourceFieldToValueMapTemplate[$etlTableKey][$variable] =
+                        Utilities::substituteVariables($variable, $this->variableMap, $this);
+                }
+            }
+        }
+
+        if ( $this->getEtlOverseerOptions()->isDryrun() ) {
+            return $numRecords;
+        }
+
+        // When the destination field map is auto-generated, only scalar source fields are used. If
+        // the source data is complex (e.g., JSON) we may end up with some complex fields in the
+        // source record (e.g., JSON objects as stdClass). Obviously, these cannot be used in the
+        // SQL parameter list but checking each field of each source record will reduce ingest
+        // performance.  Perform a on the first record to provide some sanity checking.
+
+        $invalidSourceValues = array();
+
+        foreach ( $this->destinationFieldMappings as $etlTableKey => $destFieldToSourceFieldMap ) {
+            $parameters = $this->generateParametersFromSourceRecord(
+                $firstRecord,
+                $destinationFieldIdToSourceFieldMap[$etlTableKey],
+                $sourceFieldToValueMapTemplate[$etlTableKey],
+                $simpleSourceFields[$etlTableKey],
+                $complexSourceFields[$etlTableKey]
+            );
+
+            // Verify the parameters are scalars
+
+            foreach ( $parameters as $index => $value ) {
+                if ( null !== $value && ! is_scalar($value) ) {
+                    $sourceField = $destinationFieldIdToSourceFieldMap[$etlTableKey][$index];
+                    $invalidSourceValues[$etlTableKey][$sourceField] = $value;
+                }
+            }
+        }
+
+        if ( 0 != count($invalidSourceValues) ) {
+            $this->logger->err(sprintf("First record:%s%s", PHP_EOL, print_r($firstRecord, true)));
+            $this->logAndThrowException(
+                sprintf(
+                    "Source record contains non-scalar values that cannot be used as SQL params. %s",
+                    implode('; ', array_map(
+                        function ($table, $invalidValues) {
+                            return sprintf(
+                                "Table '%s': %s",
+                                $table,
+                                implode(', ', array_map(
+                                    function ($k, $v) {
+                                        return sprintf("field '%s' = %s", $k, gettype($v));
+                                    },
+                                    array_keys($invalidValues),
+                                    $invalidValues
+                                ))
+                            );
+                        },
+                        array_keys($invalidSourceValues),
+                        $invalidSourceValues
+                    ))
+                )
+            );
+        }
+
+        // Insert each source record. Note that the source record may be an array or an
+        // object and must be Traversable.
+
+        foreach ( $this->sourceEndpoint as $sourceRecord ) {
+
+            // The same source record may be used in multiple tables.
+
+            foreach ( $this->destinationFieldMappings as $etlTableKey => $destFieldToSourceFieldMap ) {
+
+                $parameters = $this->generateParametersFromSourceRecord(
+                    $sourceRecord,
+                    $destinationFieldIdToSourceFieldMap[$etlTableKey],
+                    $sourceFieldToValueMapTemplate[$etlTableKey],
+                    $simpleSourceFields[$etlTableKey],
+                    $complexSourceFields[$etlTableKey]
+                );
+
+                try {
+                    // Some values of parameters are complex objects and cannot be! This is due to
+                    // the auto-generated field map.
+                    $insertStatements[$etlTableKey]->execute($parameters);
+                } catch (PDOException $e) {
+                    $this->logger->debug(print_r($sourceRecord, true));
+                    $this->logAndThrowException(
+                        sprintf(
+                            "Error inserting data into table key '%s' for record %s.",
+                            $etlTableKey,
+                            $this->sourceEndpoint->key()
+                        ),
+                        array('exception' => $e, 'endpoint' => $this)
+                    );
+                }
+            }
+            $numRecords++;
         }
 
         return $numRecords;
-    }  // execute()
+
+    }  // _execute()
 
     /**
-     * @see aIngestor::performPreExecuteTasks
+     * Build up a parameter list suitable for an SQL query. The parameters must be in the proper
+     * order as expected by the field list of the query (this mapping information is stored in
+     * $destinationFieldIdToSourceFieldMap). Note that the same source value may be used multiple
+     * times in the query.
+     *
+     * @param $sourceRecord The current record from the source endpoint (must be Traversable but
+     *   may not explicitly implement Traversable such as an array or stdClass)
+     * @param array $destinationFieldIdToSourceFieldMap A mapping between the parameter position
+     *   (index) in the SQL statement and the source fields so we cam properly build the SQL
+     *   parameter list in the correct order.
+     * @param array $sourceTemplate Templates for source field values containing pre-determined
+     *   values such as variables or macros.
+     * @param array $simpleSourceFields Scalar source fields that map to source fields.
+     * @param array $complexSourceFields Complex source fields that must be evaluated by the source
+     *   endpoint
+     *
+     * @return array A list of values to use as SQL parameters in the proper order corresponding
+     *   to the SQL query parameters.
      */
+
+    private function generateParametersFromSourceRecord(
+        $sourceRecord,
+        array $destinationFieldIdToSourceFieldMap,
+        array $sourceTemplate,
+        array $simpleSourceFields,
+        array $complexSourceFields
+    ) {
+        $sourceFieldToValueMap = $sourceTemplate;
+
+        // Build up the parameter list for the query. Note that the same source value may be
+        // used multiple times.
+
+        foreach ($sourceRecord as $sourceField => $sourceValue) {
+            if ( in_array($sourceField, $simpleSourceFields) ) {
+                $sourceFieldToValueMap[$sourceField] = $sourceValue;
+            }
+        }
+
+        // If this source endpoint does not support complex fields this loop won't be
+        // processed because no fields will have been identified as complex.
+
+        foreach ( $complexSourceFields as $sourceField ) {
+            $sourceFieldToValueMap[$sourceField] =
+                $this->sourceEndpoint->evaluateComplexSourceField($sourceField, $sourceRecord);
+        }
+
+        // Map the values from the source record to the correct order in the parameter list
+
+        $parameters = array();
+        foreach ( $destinationFieldIdToSourceFieldMap as $index => $sourceField ) {
+            $parameters[$index] = $sourceFieldToValueMap[$sourceField];
+        }
+
+        return $parameters;
+
+    }  // generateParametersFromSourceRecord()
+
+    /** -----------------------------------------------------------------------------------------
+     * @see aIngestor::performPreExecuteTasks
+     * ------------------------------------------------------------------------------------------
+     */
+
     protected function performPreExecuteTasks()
     {
-        $this->time_start = microtime(true);
-
-        $this->initialize($this->getEtlOverseerOptions());
-
-        $this->manageTable($this->etlDestinationTable, $this->destinationEndpoint);
-
-        $this->truncateDestination();
-
-        // The destination columns may be specified as an array when the source
-        // values are given as arrays and an object for when the source values
-        // are given as objects. Regardless of form, get a list of destination
-        // columns and a mapping of those columns to their corresponding keys in
-        // source values.
-        $destColumns = $this->parsedDefinitionFile->destination_columns;
-        if (is_array($destColumns)) {
-            $destColumnsToSourceKeys = array_flip($destColumns);
-            if ($destColumnsToSourceKeys === null) {
-                $msg = "destination_columns is an invalid array: " . $this->definitionFile;
-                $this->logAndThrowException($msg);
-            }
-        } else {
-            $destColumnsToSourceKeys = (array) $destColumns;
-            $destColumns = array_keys($destColumnsToSourceKeys);
-        }
-
-        // If a source data endpoint was given, use it. Otherwise, use data
-        // values specified in the definition file.
-        if ($this->sourceEndpoint) {
-            $sourceValues = $this->sourceEndpoint->parse();
-        } else {
-            $sourceValues = $this->parsedDefinitionFile->source_values;
-        }
+        parent::performPreExecuteTasks();
 
         // If any custom SQL fragments for insertion were specified, use them.
-        $customInsertValuesComponents = $this->parsedDefinitionFile->custom_insert_values_components;
-        if ($customInsertValuesComponents === null) {
-            $customInsertValuesComponents = new stdClass();
-        }
 
-        $this->executionData = array(
-            'destColumns' => $destColumns,
-            'destColumnsToSourceKeys' => $destColumnsToSourceKeys,
-            'sourceValues' => $sourceValues,
-            'customInsertValuesComponents' => $customInsertValuesComponents,
-        );
-
-        return true;
-    }
-
-    /**
-     * @see aIngestor::performPostExecuteTasks
-     */
-    protected function performPostExecuteTasks($numRecords = null)
-    {
-        $time_start = $this->time_start;
-        $time_end = microtime(true);
-        $time = $time_end - $time_start;
-
-        $logArray = array(
-            'action'         => (string) $this,
-            'start_time'     => $time_start,
-            'end_time'       => $time_end,
-            'elapsed_time'   => round($time, 5),
-        );
-
-        if ($numRecords !== null) {
-            $logArray['records_loaded'] = $numRecords;
-        }
-
-        $this->logger->notice($logArray);
-
-        return true;
-    }
-
-    /**
-     * Convert a given data point into a set of values for database insertion.
-     *
-     * NOTE: Values not found in the data point will be treated as null.
-     *
-     * @param  array|stdClass $sourceValue     The data point to convert.
-     * @param  array $destColumns              An ordered list of columns an
-     *                                         INSERT statement is expected
-     *                                         to be provided values for.
-     * @param  array $destColumnsToSourceKeys  A mapping of columns to their
-     *                                         corresponding keys in the data.
-     * @return array                           A set of values ready to be
-     *                                         used with an INSERT statement.
-     */
-    protected function convertSourceValueToRow(
-        $sourceValue,
-        $destColumns,
-        $destColumnsToSourceKeys
-    ) {
-        $row = array();
-        foreach ($destColumns as $destColumn) {
-            $sourceKey = $destColumnsToSourceKeys[$destColumn];
-
-            // If the key is an integer, then the data point should be an array.
-            // Otherwise, the data point should be an object.
-            if (is_int($sourceKey)) {
-                $row[] = (
-                    isset($sourceValue[$sourceKey])
-                    ? $sourceValue[$sourceKey]
-                    : null
-                );
-            } else {
-                $row[] = (
-                    property_exists($sourceValue, $sourceKey)
-                    ? $sourceValue->$sourceKey
-                    : null
+        if ( isset($this->parsedDefinitionFile->custom_insert_values_components) ) {
+            $this->customInsertValuesComponents = $this->parsedDefinitionFile->custom_insert_values_components;
+            if ( ! is_object($this->customInsertValuesComponents) ) {
+                $this->logAndThrowException(
+                    sprintf(
+                        "custom_insert_values_components must be an object, %s given",
+                        gettype($this->customInsertValuesComponents)
+                    )
                 );
             }
+        } else {
+            $this->customInsertValuesComponents = new stdClass();
         }
-        return $row;
+
+        return true;
     }
 }  // class StructuredFileIngestor

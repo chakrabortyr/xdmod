@@ -1,5 +1,7 @@
 <?php
 
+use CCR\MailWrapper;
+
 // Operation: user_admin->create_user
 
 $creator = \xd_security\assertDashboardUserLoggedIn();
@@ -103,24 +105,8 @@ try {
 
     // =============================
 
-    $page_title = xd_utilities\getConfiguration('general', 'title');
-    $site_address = xd_utilities\getConfigurationUrlBase('general', 'site_address');
-    $mailer_sender = xd_utilities\getConfiguration('mailer', 'sender_email');
-
-    // -------------------
-
-    $mail = ZendMailWrapper::init();
-
-    $mail->setFrom($mailer_sender, 'XDMoD');
-
-    $mail->setSubject("$page_title: Account Created");
-
-    $recipient
-        = (xd_utilities\getConfiguration('general', 'debug_mode') == 'on')
-        ? xd_utilities\getConfiguration('general', 'debug_recipient')
-        : $_POST['email_address'];
-
-    $mail->addTo($recipient);
+    $page_title = \xd_utilities\getConfiguration('general', 'title');
+    $site_address = \xd_utilities\getConfigurationUrlBase('general', 'site_address');
 
     // -------------------
 
@@ -134,11 +120,12 @@ try {
     $message .= $site_address."user_manual\n\n";
     $message .= "The XDMoD Team";
 
-    $mail->setBodyText($message);
-
-    // -------------------
-
-    $mail->send();
+    MailWrapper::sendMail(array(
+        'body'      => $message,
+        'subject'   => "$page_title: Account Created",
+        'toAddress' => $_POST['email_address']
+        )
+    );
 }
 catch (Exception $e) {
     \xd_response\presentError($e->getMessage());

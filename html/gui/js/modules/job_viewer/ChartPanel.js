@@ -54,47 +54,12 @@ XDMoD.Module.JobViewer.ChartPanel = Ext.extend(Ext.Panel, {
             legend: {
                 enabled: false
             },
+            credits: {
+                text: '',
+                href: ''
+            },
             exporting: {
-                enabled: true,
-                buttons: {
-                    contextButton: {
-                        menuClassName: 'job-viewer-timeseries-chart-contextmenu',
-                        symbol: 'menu',
-                        title: 'Chart context menu',
-                        menuItems: [
-                        {
-                            text: 'Print chart',
-                            onclick: function () {
-                                this.print();
-                            }
-                        },
-                        {
-                            separator: true
-                        },
-                        {
-                            text: 'Download PNG image',
-                            onclick: function () {
-                                document.location = this.userOptions.dataurl + '&filetype=image/png';
-                            }
-                        },
-                        {
-                            text: 'Download SVG image',
-                            onclick: function () {
-                                document.location = this.userOptions.dataurl + '&filetype=image/svg';
-                            }
-                        },
-                        {
-                            separator: true
-                        },
-                        {
-                            text: 'Download CSV data',
-                            onclick: function () {
-                                document.location = this.userOptions.dataurl + '&filetype=text/csv';
-                            }
-                        }
-                        ]
-                    }
-                }
+                enabled: false
             },
             tooltip: {
                 dateTimeLabelFormats: {
@@ -214,6 +179,23 @@ XDMoD.Module.JobViewer.ChartPanel = Ext.extend(Ext.Panel, {
             this.options.chart.height = adjHeight;
         }, // resize
 
+        destroy: function () {
+            if (this.chart) {
+                this.chart.destroy();
+                this.chart = null;
+            }
+        },
+
+        export_option_selected: function (exportParams) {
+            document.location = this.dataurl + '&' + Ext.urlEncode(exportParams);
+        },
+
+        print_clicked: function () {
+            if (this.chart) {
+                this.chart.print();
+            }
+        },
+
         /**
          *
          * @param panel
@@ -255,8 +237,10 @@ XDMoD.Module.JobViewer.ChartPanel = Ext.extend(Ext.Panel, {
                 chartOptions.series = record.data.series;
                 chartOptions.yAxis.title.text = record.data.schema.units;
                 chartOptions.xAxis.title.text = 'Time (' + record.data.schema.timezone + ')';
+                chartOptions.credits.text = record.data.schema.source + '. Powered by XDMoD/Highcharts';
                 chartOptions.title.text = record.data.schema.description;
                 chartOptions.dataurl = record.store.proxy.url;
+                this.dataurl = record.store.proxy.url;
                 this.displayTimezone = record.data.schema.timezone;
 
                 this.setHighchartTimezone();
@@ -319,6 +303,10 @@ XDMoD.Module.JobViewer.ChartPanel = Ext.extend(Ext.Panel, {
                     this.jobTab.fireEvent("display_help", panel.helptext);
                 }
             }
+
+            if (panel.chart) {
+                panel.chart.destroy();
+            }
             panel.chart = new Highcharts.Chart(chartOptions);
             if (!record) {
                 panel.chart.showLoading();
@@ -368,11 +356,7 @@ XDMoD.Module.JobViewer.ChartPanel = Ext.extend(Ext.Panel, {
                     return;
                 }
                 var record = tor.getAt(0);
-                if (CCR.exists(record) &&
-                   CCR.exists(self.chart)) {
-                    self.chart = null;
-                    self.fireEvent('load_record', self, record);
-                } else if (CCR.exists(record)) {
+                if (CCR.exists(record)) {
                     self.fireEvent('load_record', self, record);
                 }
             });

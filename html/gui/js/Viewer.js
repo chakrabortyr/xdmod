@@ -417,32 +417,39 @@ Ext.extend(CCR.xdmod.ui.Viewer, Ext.Viewport, {
 
         // DEFINE: the token that we came in with.
         var mainTabToken = 'main_tab_panel';
-        var token = CCR.xdmod.ui.Viewer.viewerInstance.tokenize(document.location.hash);
+          var token = CCR.tokenize(document.location.hash);
         var tabToken;
 
         for (var i = 0; i < tabs.length; i++) {
-          var tab = tabs[i];
-          tab.mainTabToken = mainTabToken;
-          tab.id = tab.tab;
+            var tab = tabs[i];
+            tab.mainTabToken = mainTabToken;
+            tab.id = tab.tab;
 
-          var tabInstance = CCR.getInstance(tab.javascriptReference, tab.javascriptClass, tab);
-          if (!tabInstance) {
-            continue;
-          }
-          tabPanel.add(tabInstance);
-          if (tab.isDefault == true && !isCallCached) {
-            tabToken = tabToken || mainTabToken + CCR.xdmod.ui.tokenDelimiter + tab.tab;
-          }
+            var tabInstance = CCR.getInstance(tab.javascriptReference, tab.javascriptClass, tab);
+            if (!tabInstance) {
+                continue;
+            }
+            tabPanel.add(tabInstance);
+            if (tab.isDefault === true) {
+                tabToken = tabToken || mainTabToken + CCR.xdmod.ui.tokenDelimiter + tab.name;
+            }
         }
 
         if (mainPanel.el) {
           mainPanel.el.unmask();
         }
 
-        consultCallCache();
-
         //Conditionally present the profile if an e-mail address has not been set
         xsedeProfilePrompt();
+
+          // The login dialog is presented if the user is not logged in
+          // and the location requests an unavailable tab.
+          if (CCR.xdmod.publicUser && token.tab) {
+              var match = tabPanel.find('id', token.tab);
+              if (match.length === 0) {
+                  CCR.xdmod.ui.actionLogin();
+              }
+          }
 
         var hasToken = token && token.content && token.content.length > 2;
         var hasTabToken = tabToken && tabToken.length > 2;
@@ -464,117 +471,6 @@ Ext.extend(CCR.xdmod.ui.Viewer, Ext.Viewport, {
     CCR.xdmod.ui.Viewer.viewerInstance = this;
 
   }, //initComponent
-  tokenize: function(hash) {
-    if (hash !== undefined &&
-      hash !== null &&
-      typeof hash === 'string' &&
-      hash.length > 0) {
-
-      function first(value, delimiter) {
-        if (value !== null &&
-          value !== undefined &&
-          typeof value === 'string') {
-          if (value.indexOf(delimiter) >= 0) {
-            return value.split(delimiter)[0];
-          } else {
-            return value;
-          }
-        }
-        return value;
-      };
-
-      function second(value, delimiter) {
-        if (value !== null &&
-          value !== undefined &&
-          typeof value === 'string') {
-          if (value.indexOf(delimiter) >= 0) {
-            return value.split(delimiter)[1];
-          } else {
-            return value;
-          }
-        }
-        return value;
-      };
-
-      function third(value, delimiter) {
-        if (value !== null &&
-          value !== undefined &&
-          typeof value === 'string') {
-          if (value.indexOf(delimiter) >= 0 && value.lastIndexOf(delimiter) > value.indexOf(delimiter)) {
-            return value.split(delimiter)[2];
-          } else {
-            return value;
-          }
-        }
-        return value;
-      };
-
-      var tabDelimIndex = hash.indexOf(CCR.xdmod.ui.tokenDelimiter);
-      var paramDelimIndex = hash.indexOf('?');
-
-      var result = {
-        raw: hash,
-        content: second(hash, '#')
-      };
-      if (tabDelimIndex >= 0 && paramDelimIndex >= 0) {
-
-        // We have a well formed hash: parent:child:subchild?name=value...
-        var root = first(
-          first(result.content, CCR.xdmod.ui.tokenDelimiter), '?'
-        );
-
-        var tab = second(first(result.content, '?'), CCR.xdmod.ui.tokenDelimiter);
-        var subtab = third(first(result.content, '?'), CCR.xdmod.ui.tokenDelimiter);
-        if (subtab === first(result.content, '?')) {
-          subtab = '';
-        }
-
-        var params = second(result.content, '?');
-
-        if (params === result.content) {
-          params = '';
-        }
-
-        result['root'] = root;
-        result['tab'] = tab;
-        result['subtab'] = subtab;
-        result['params'] = params;
-      } else if (tabDelimIndex < 0 && paramDelimIndex < 0) {
-
-        // We have a hash that looks like: name=value
-        result['root'] = '';
-        result['tab'] = '';
-        result['params'] = result.content;
-      } else if (tabDelimIndex >= 0 && paramDelimIndex < 0) {
-
-        // We have a hash that looks like: parent:child:subchild
-        root = first(result.content, CCR.xdmod.ui.tokenDelimiter);
-        tab = second(result.content, CCR.xdmod.ui.tokenDelimiter);
-        var subtab = third(result.content, CCR.xdmod.ui.tokenDelimiter);
-        if (subtab === result.content) {
-          subtab = '';
-        }
-
-        result['root'] = root;
-        result['tab'] = tab;
-        result['subtab'] = subtab;
-        result['params'] = '';
-      } else if (tabDelimIndex < 0 && paramDelimIndex >= 0) {
-
-        // We have a hash that looks like: child?name=value
-        root = '';
-        tab = first(result.content, '?');
-        params = second(result.content, '?');
-
-        result['root'] = root;
-        result['tab'] = tab;
-        result['params'] = params;
-      }
-
-      return result;
-    }
-    return {};
-  },
   getParameterByName: function(name, source) {
     name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
     var regex = new RegExp("[\\?&#]" + name + "=([^&#]*)"),

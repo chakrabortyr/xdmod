@@ -1,0 +1,28 @@
+language: none
+env:
+    - XDMOD_TEST_MODE=fresh_install
+    - XDMOD_TEST_MODE=upgrade
+build:
+    cache: true
+    cache_dir_list:
+        - /root/.composer
+        - /root/.npm
+    pre_ci_boot:
+        image_name: tas-tools-ext-01.ccr.xdmod.org/centos7-xdmod7.0.1
+        image_tag: version6
+        pull: true
+        options: "--user root -e HOME=/root"
+    ci:
+        - composer install --no-progress
+        - ~/bin/buildrpm xdmod
+        - ./open_xdmod/modules/xdmod/integration_tests/scripts/bootstrap.sh
+        - composer install --no-progress
+        - cp ~/assets/secrets open_xdmod/modules/xdmod/integration_tests/.secrets.json
+        - ./open_xdmod/modules/xdmod/integration_tests/runtests.sh --log-junit `pwd`/shippable/testresults/results.xml
+        - cp ./configuration/portal_settings.ini ./configuration/portal_settings.ini.old
+        - cp -f /etc/xdmod/portal_settings.ini ./configuration/portal_settings.ini
+        - ./open_xdmod/modules/xdmod/component_tests/runtests.sh --log-junit `pwd`/shippable/testresults/componentresults.xml
+        - mv ./configuration/portal_settings.ini.old ./configuration/portal_settings.ini
+        - ./open_xdmod/modules/xdmod/automated_tests/runtests.sh --headless --log-junit `pwd`/shippable/testresults
+    on_failure:
+        - cat /var/log/xdmod/*
