@@ -41,8 +41,7 @@ class IdentityTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException ArgumentCountError
-     * @requires PHP 7.1
+     * @expectedException InvalidArgumentException
      */
     public function testNoDefaultParameterToConstructor()
     {

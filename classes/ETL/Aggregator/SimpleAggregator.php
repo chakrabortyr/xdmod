@@ -14,7 +14,8 @@ namespace ETL\Aggregator;
 
 use ETL\iAction;
 
-class SimpleAggregator extends pdoAggregator implements iAction
+class SimpleAggregator extends pdoAggregator
+implements iAction
 {
 
 }  // class SimpleAggregator

@@ -192,7 +192,3 @@ define('COLORS', file_get_contents(CONFIG_DIR.'/colors1.json'));
 
 define('OPEN_XDMOD_VERSION', '_BUILD_DEFINED_OPEN_XDMOD_VERSION_');
 
-/**
- * Default Module Name
- **/
-define('DEFAULT_MODULE_NAME', 'xdmod');

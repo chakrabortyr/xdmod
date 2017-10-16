@@ -6,8 +6,9 @@
  * well such as a schema for a database or a mode for a file.  In addition to metadata, endpoints
  * provide a handle to the underlying implementation (e.g., a PDO or file handle)
  *
- * Data Endpoint configurations tend to be immutable once they are created, providing only
- * accessors to properties and not setters.
+ * The endpoint name may have different meaning in different contexts. E.g., for a mysql endpoint it
+ * may be a configuration file section specifying connection parameters and for a file endpoint it
+ * may be the path to the file.
  *
  * @author Steve Gallo <smgallo@buffalo.edu>
  * @date 2015-10-15
@@ -18,21 +19,16 @@
 
 namespace ETL\DataEndpoint;
 
-// PEAR logger
-use Log;
-
 interface iDataEndpoint
 {
     /* ------------------------------------------------------------------------------------------
      * Create the DataEndpoint object
      *
-     * @param DataEndpointOptions $options A DataEndpointOptions object containing option
-     *    information
-     * @param Log $logger Optional PEAR Log object for system logging
+     * @param $options A DataEndpointOptions object containing option information
      * ------------------------------------------------------------------------------------------
      */
 
-    public function __construct(DataEndpointOptions $options, Log $logger = null);
+    public function __construct(DataEndpointOptions $options);
 
     /* ------------------------------------------------------------------------------------------
      * @return The endpoint type (e.g., mysql, postgres, file)
@@ -60,7 +56,7 @@ interface iDataEndpoint
      * @return A handle to the underlying data access mechanism (file handle, database handle, etc.)
      * ------------------------------------------------------------------------------------------
      */
-
+   
     public function getHandle();
 
     /* ------------------------------------------------------------------------------------------
@@ -131,4 +127,5 @@ interface iDataEndpoint
      */
 
     public function __toString();
+
 }  // interface iDataEndpoint

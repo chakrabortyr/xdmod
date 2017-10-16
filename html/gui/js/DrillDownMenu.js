@@ -25,11 +25,11 @@ Ext.extend(CCR.xdmod.ui.DrillDownMenu, Ext.menu.Menu, {
     drillDownGroupBys: [],
     initComponent: function () {
         var items = [];
-        if (this.drillDownGroupBys.length !== 0) {
-            var groupByDescripter = this.drillDownGroupBys;
+        if (this.drillDownGroupBys != '') {
+            var groupByDescripter = this.drillDownGroupBys.split(',');
 
             for (var i = 0; i < groupByDescripter.length; i++) {
-                var gbd = groupByDescripter[i];
+                var gbd = groupByDescripter[i].split('-');
                 if (gbd.length == 2 &&
                     (this.node.attributes.parameters == null ||
                         (this.node.attributes.parameters[gbd[0]] == null &&
@@ -52,7 +52,7 @@ Ext.extend(CCR.xdmod.ui.DrillDownMenu, Ext.menu.Menu, {
                     items.push(
                         new Ext.menu.Item({
                             scope: this,
-                            drillDown: gbd,
+                            drillDown: groupByDescripter[i],
                             paramLabel: gbd[1],
                             text: gbd[1],
                             iconCls: 'drill',

@@ -1,7 +1,5 @@
 <?php
 
-use CCR\MailWrapper;
-
 // Operation: mailer->contact
 
 $response = array();
@@ -67,6 +65,15 @@ if ($captcha_private_key !== '' && !isset($_SESSION['xdUser'])) {
 
 // ----------------------------------------------------------
 
+$mailer_sender = xd_utilities\getConfiguration('mailer', 'sender_email');
+
+$recipient
+  = (xd_utilities\getConfiguration('general', 'debug_mode') == 'on')
+  ? xd_utilities\getConfiguration('general', 'debug_recipient')
+  : xd_utilities\getConfiguration('general', 'contact_page_recipient');
+
+$mail = ZendMailWrapper::init();
+
 switch ($reason) {
   case 'wishlist':
     $subject = "[WISHLIST] Feature request sent from a portal visitor";
@@ -79,6 +86,15 @@ switch ($reason) {
     break;
 }
 
+$mail->setSubject($subject);
+$mail->addTo($recipient);
+
+//$mail->setFrom($mailer_sender, 'XDMoD');
+
+//Original sender's e-mail must be in the 'From' field for the XDMoD Request Tracker to function
+$mail->setFrom($_POST['email']);
+$mail->setReplyTo($_POST['email']);
+
 $timestamp = date('m/d/Y, g:i:s A', $_POST['timestamp']);
 
 $message = "Below is a $message_type from '{$_POST['name']}' ({$_POST['email']}):\n\n";
@@ -86,17 +102,10 @@ $message .= $_POST['message'];
 $message .="\n------------------------\n\nSession Tracking Data:\n\n  ";
 $message .="$user_info\n\n  Token:        {$_POST['token']}\n  Timestamp:    $timestamp";
 
+$mail->setBodyText($message);
+
 try {
-    //Original sender's e-mail must be in the 'fromAddress' field for the XDMoD Request Tracker to function
-    MailWrapper::sendMail(array(
-        'body'         => $message,
-        'subject'      => $subject,
-        'toAddress'    => \xd_utilities\getConfiguration('general', 'contact_page_recipient'),
-        'fromAddress'  => $_POST['email'],
-        'fromName'     => $_POST['name'],
-        'replyAddress' => \xd_utilities\getConfiguration('mailer', 'sender_email')
-        )
-    );
+    $mail->send();
 }
 catch (Exception $e) {
     $response['success'] = false;
@@ -107,21 +116,27 @@ catch (Exception $e) {
 
 // =====================================================
 
+$mail = ZendMailWrapper::init();
+$mail->setFrom($mailer_sender, 'XDMoD');
+$mail->setSubject("Thank you for your $message_type.");
+$mail->addTo($_POST['email']);
+
+// -------------------
+
 $message
     = "Hello, {$_POST['name']}\n\n"
     . "This e-mail is to inform you that the XDMoD Portal Team has received your $message_type, and will\n"
     . "be in touch with you as soon as possible.\n\n"
-    . MailWrapper::getMaintainerSignature();
+    . "The TAS Project Team\n"
+    . "Center for Computational Research\n"
+    . "University at Buffalo, SUNY\n";
+
+$mail->setBodyText($message);
 
 // -------------------
 
 try {
-    MailWrapper::sendMail(array(
-        'body'      => $message,
-        'subject'   => "Thank you for your $message_type.",
-        'toAddress' => $_POST['email']
-        )
-    );
+    $mail->send();
 }
 catch (Exception $e) {
     $response['success'] = false;

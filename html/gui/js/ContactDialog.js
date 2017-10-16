@@ -26,7 +26,7 @@ XDMoD.AbstractContactDialog = Ext.extend(Ext.Window, {
 
             allowBlank: false,
             blankText: fieldRequiredText,
-            maxLength: maxNameLength + 1,
+            maxLength: maxNameLength,
             maxLengthText: 'Maximum length (' + maxNameLength + ' characters) exceeded.',
             regex: XDMoD.regex.noReservedCharacters,
             regexText: 'This field may not contain reserved characters. ($, ^, #, <, >, ", :, \\, /, !)',

@@ -115,7 +115,6 @@
 
       <link rel="shortcut icon" href="gui/icons/favicon_static.ico" />
       <script type="text/javascript" src="gui/lib/oldie-console-patch.js"></script>
-      <script type="text/javascript" src="gui/lib/oldie-array-includes-polyfill.js"></script>
       <?php if (!$userLoggedIn): ?>
       <script type="text/javascript">
          /**
@@ -226,7 +225,6 @@
       <script type="text/javascript" src="gui/js/ContainerMask.js"></script>
        <script type="text/javascript" src="gui/js/ContainerBodyMask.js"></script>
 
-      <link rel="stylesheet" type="text/css" href="gui/css/MetricExplorer.css" />
       <link rel="stylesheet" type="text/css" href="gui/css/common.css" />
       <!--[if lte IE 9]>
       <link rel="stylesheet" type="text/css" href="gui/css/common_ie9.css" />
@@ -304,6 +302,13 @@
             }
             print "CCR.xdmod.use_captcha = " . $useCaptcha .";";
             if (!$userLoggedIn) {
+               $tabs = "";
+               try {
+                  $tabs =  xd_utilities\getConfiguration('auto_login', 'tabs');
+               } catch (exception $ex) {
+                  print "console.warn(\"" . $ex->getMessage() . "\");\n";
+               }
+               print "CCR.xdmod.tabs ='". $tabs ."';\n";
                $auth = null;
                try {
                   $auth = new Authentication\SAML\XDSamlAuthentication();
@@ -459,8 +464,6 @@
       <?php if (xd_utilities\getConfiguration('features', 'singlejobviewer') == 'on'): ?>
       <script type="text/javascript" src="gui/js/modules/job_viewer/JobViewer.js"></script>
       <script type="text/javascript" src="gui/js/modules/job_viewer/ChartPanel.js"></script>
-      <script type="text/javascript" src="gui/js/modules/job_viewer/ChartTab.js"></script>
-      <script type="text/javascript" src="gui/js/modules/job_viewer/GanttChart.js"></script>
       <script type="text/javascript" src="gui/js/modules/job_viewer/AnalyticChartPanel.js"></script>
       <script type="text/javascript" src="gui/js/modules/job_viewer/TimeSeriesStore.js"></script>
       <script type="text/javascript" src="gui/js/modules/job_viewer/SearchPanel.js"></script>
@@ -488,12 +491,38 @@
 
       <script type="text/javascript">
 
+         var isCallCached = false;
+         var consultCallCache = function() {};
          var xsedeProfilePrompt = function() {};
 
          <?php if (!$userLoggedIn): ?>
          Ext.onReady(xdmodviewer.init, xdmodviewer);
+
+         Ext.onReady(function() {
+            CCR.xdmod.tabs = CCR.xdmod.tabs.split(',');
+            var hash = document.location.hash;
+            var hasHash = hash !== null && hash !== undefined && hash !== '';
+            if (hasHash) {
+               var token = CCR.xdmod.ui.Viewer.viewerInstance.tokenize(hash);
+               if (token && token.tab && CCR.xdmod.tabs.indexOf(token.tab) >= 0) {
+                  CCR.xdmod.ui.actionLogin();
+               }
+            }
+         });
          <?php else: ?>
          <?php
+            if (isset($_SESSION['cached_call']) && !empty($_SESSION['cached_call'])) {
+         ?>
+
+            isCallCached = true;
+            consultCallCache = function() { CCR.xdmod.ui.Viewer.<?php print $_SESSION['cached_call']; ?> }
+
+         <?php
+
+               unset($_SESSION['cached_call']);
+
+            }
+
             // ==============================================
 
             $profile_editor_init_flag = '';
@@ -564,6 +593,17 @@
          <input type="hidden" id="x-history-field" />
          <iframe id="x-history-frame"></iframe>
       </form>
+
+      <?php if (!$userLoggedIn): ?>
+      <!-- For caching calls (e.g. goToChart(...), made when an image thumbnail is clicked) -->
+      <form name="function_call_cacher" class="x-hidden" method="POST" action="index.php">
+         <input type="hidden" id="cached_call" name="cached_call" value="">
+      </form>
+      <?php endif; ?>
+
+      <div class="x-hidden">
+         <iframe name="pdf_target_frame"></iframe>
+      </div>
 
       <div id="viewer"> </div>
 

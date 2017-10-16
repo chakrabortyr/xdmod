@@ -15,8 +15,8 @@ namespace ETL\DataEndpoint;
 
 use ETL\aEtlObject;
 use ETL\DataEndpoint\iDataEndpoint;
-use Exception;
-use Log;
+use \Exception;
+use \Log;
 
 abstract class aDataEndpoint extends aEtlObject
 {
@@ -48,19 +48,8 @@ abstract class aDataEndpoint extends aEtlObject
         $requiredKeys = array("name", "type");
         $this->verifyRequiredConfigKeys($requiredKeys, $options);
 
-        $messages = array();
-        $propertyTypes = array(
-            'name' => 'string',
-            'type' => 'string'
-        );
-
-        if ( ! \xd_utilities\verify_object_property_types($options, $propertyTypes, $messages, true) ) {
-            $this->logAndThrowException("Error verifying options: " . implode(", ", $messages));
-        }
-
         $this->type = $options->type;
         $this->setName($options->name);
-
     }  // __construct()
 
     // ------------------------------------------------------------------------------------------
@@ -124,10 +113,4 @@ abstract class aDataEndpoint extends aEtlObject
         $keyIndex = self::$currentUniqueKeyIndex++;
         $this->key = "DataEndpoint{$keyIndex}";
     }
-
-    /**
-     * See iDataEndpoint::connect()
-     */
-
-    abstract public function connect();
 }  // abstract class aDataEndpoint

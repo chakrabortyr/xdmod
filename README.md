@@ -21,17 +21,6 @@ For more information, including information about additional Open XDMoD
 capabilities provided as optional modules, please visit
 [the Open XDMoD website](http://open.xdmod.org).
 
-## Support
-
-Support is available by emailing ccr-xdmod-help@buffalo.edu. Please include the following in your support request. Failure to include this information may delay support. See the [Open XDMoD Support](http://open.xdmod.org/support.html) page for additional information.
-
-- Open XDMoD version number
-- Operating system and version where Open XDMoD is installed
-- The output of `xdmod-check-config`
-- PHP and MySQL version (e.g, the output from `php --version`, `mysql --version`, and the SQL command `SHOW VARIABLES LIKE "%version%";`)
-- A description of the problem you are experiencing
-- Detailed steps to reproduce the problem
-
 ## Modules for Open XDMoD
 
 In addition to the analysis functionality provided by the main Open XDMoD
@@ -86,10 +75,6 @@ Development on Open XDMoD and its modules can be started using either
 [Repo][] or Git. If you are unsure which to start with, try Repo, as it is
 easy to transition from a Repo workflow to a pure Git workflow. If you
 don't want to install yet another tool, using Git will work just fine.
-
-Whichever tool you choose, we recommend keeping your various repository
-clones inside a dedicated directory on your local system. This will make
-it easier to [use quality assurance tools locally][xdmod-qa].
 
 Before starting with either, however, you will want to fork any repositories
 you are interested in working on. Simply visit the repositories' pages on GitHub
@@ -201,12 +186,6 @@ used. More information about the manifest file format and local manifest files
 may be found [here][repo-format]. Once you have made the desired changes, run
 `repo sync` to pull the changes in.
 
-### Installing Quality Assurance Tools
-
-If you wish to locally install and use the quality assurance tools that will
-be used to check your code, you can do so by following the instructions on the
-[Open XDMoD QA repository page][xdmod-qa].
-
 ## Building
 
 ### Dependencies
@@ -220,7 +199,6 @@ be used to check your code, you can do so by following the instructions on the
     - Ubuntu 16.04
       - `php-curl`
       - `php-gmp`
-      - `php-zip`
   - [Composer](https://getcomposer.org/)
   - [PEAR](https://pear.php.net/)
   - [PEAR Log Module](https://pear.php.net/package/Log/)
@@ -351,5 +329,4 @@ See the [license page on the Open XDMoD website][license-page] for details.
 [license-page]: http://open.xdmod.org/notices.html
 [repo]: https://code.google.com/p/git-repo/
 [repo-format]: https://gerrit.googlesource.com/git-repo/+/master/docs/manifest-format.txt
-[xdmod-qa]: https://github.com/ubccr/xdmod-qa
 [xdmod-repo-manifest]: https://github.com/ubccr/xdmod-repo-manifest

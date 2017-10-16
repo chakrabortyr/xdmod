@@ -19,7 +19,7 @@
             }
         },
 
-        "jobs-cloud": {
+        "cloud-jobs": {
             "namespace": "ETL\\Ingestor",
             "options_class": "IngestorOptions"
         }
@@ -27,7 +27,7 @@
 
     "#": "Current Cloud job ingestion",
 
-    "jobs-cloud": [
+    "cloud-jobs": [
         {
             "name": "CloudTableManagement",
             "class": "ManageTables",
@@ -54,14 +54,7 @@
             "class": "StructuredFileIngestor",
             "definition_file": "cloud/event_type.json",
             "enabled": true,
-            "truncate_destination": true,
-            "endpoints": {
-                "source": {
-                    "type": "jsonfile",
-                    "name": "Cloud event types",
-                    "path": "cloud/event_type.json"
-                }
-            }
+            "truncate_destination": true
         },
         {
             "name": "CloudAssetTypeIngestor",
@@ -69,14 +62,7 @@
             "class": "StructuredFileIngestor",
             "definition_file": "cloud/asset_type.json",
             "enabled": true,
-            "truncate_destination": true,
-            "endpoints": {
-                "source": {
-                    "type": "jsonfile",
-                    "name": "Cloud asset types",
-                    "path": "cloud/asset_type.json"
-                }
-            }
+            "truncate_destination": true
         },
         {
             "name": "CloudInstanceTypeIngestor",
@@ -84,14 +70,7 @@
             "class": "StructuredFileIngestor",
             "definition_file": "cloud/instance_type.json",
             "enabled": true,
-            "truncate_destination": true,
-            "endpoints": {
-                "source": {
-                    "type": "jsonfile",
-                    "name": "Cloud instance types",
-                    "path": "cloud/instance_type.json"
-                }
-            }
+            "truncate_destination": true
         },
         {
             "name": "CloudRegionIngestor",
@@ -99,14 +78,7 @@
             "class": "StructuredFileIngestor",
             "definition_file": "cloud/region.json",
             "enabled": true,
-            "truncate_destination": true,
-            "endpoints": {
-                "source": {
-                    "type": "jsonfile",
-                    "name": "Cloud regions",
-                    "path": "cloud/region.json"
-                }
-            }
+            "truncate_destination": true
         },
         {
             "name": "CloudAvailabilityZoneIngestor",
@@ -114,14 +86,7 @@
             "class": "StructuredFileIngestor",
             "definition_file": "cloud/avail_zone.json",
             "enabled": true,
-            "truncate_destination": true,
-            "endpoints": {
-                "source": {
-                    "type": "jsonfile",
-                    "name": "Cloud availability zones",
-                    "path": "cloud/avail_zone.json"
-                }
-            }
+            "truncate_destination": true
         }
     ]
 }

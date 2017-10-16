@@ -11,17 +11,14 @@
 
 namespace ETL\Aggregator;
 
-use ETL\aOptions;
 use ETL\iAction;
-use ETL\aAction;
-use ETL\Configuration\EtlConfiguration;
+use ETL\EtlConfiguration;
 use ETL\EtlOverseerOptions;
-
 use Log;
 
 class DummyAggregator extends aAction implements iAction
 {
-    public function __construct(aOptions $options, EtlConfiguration $etlConfig, Log $logger = null)
+    public function __construct(AggregatorOptions $options, EtlConfiguration $etlConfig, Log $logger = null)
     {
         parent::__construct($options, $etlConfig, $logger);
     }
@@ -34,16 +31,6 @@ class DummyAggregator extends aAction implements iAction
     public function initialize(EtlOverseerOptions $etlOverseerOptions = null)
     {
         parent::initialize($etlOverseerOptions);
-        return true;
-    }
-
-    protected function performPreExecuteTasks()
-    {
-        return true;
-    }
-
-    protected function performPostExecuteTasks($numRecordsProcessed = null)
-    {
         return true;
     }
 }  // class DummyAggregator

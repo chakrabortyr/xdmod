@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/../../../configuration/linker.php';
 
-use CCR\MailWrapper;
 use CCR\DB;
 use Xdmod\EmailTemplate;
 
@@ -48,11 +47,11 @@ switch ($operation) {
             'version'              => $version,
             'contact_email'        => $contact_email,
             'organization'         => ORGANIZATION_NAME,
-            'maintainer_signature' => MailWrapper::getMaintainerSignature(),
+            'maintainer_signature' => MailTemplates::getMaintainerSignature(),
             'date'                 => date('l, j F'),
-            'site_title'           => \xd_utilities\getConfiguration('general', 'title'),
+            'site_title'           => MailTemplates::getSiteTitle(),
             'site_address'         => $site_address,
-            'product_name'         => MailWrapper::getProductName(),
+            'product_name'         => MailTemplates::getProductName(),
         ));
 
         $response['success'] = true;
@@ -83,20 +82,32 @@ switch ($operation) {
 
         break;
     case 'send_plain_mail':
+        $target_addresses = \xd_security\assertParameterSet('target_addresses');
+        $message = \xd_security\assertParameterSet('message', '/.*/', false);
+        $subject = \xd_security\assertParameterSet('subject');
+
         $response['success'] = true;
 
+        $mail = ZendMailWrapper::init();
+
         $title = \xd_utilities\getConfiguration('general', 'title');
+        $mail->setSubject("[$title] $subject");
 
         // Send a copy of the email to the contact page recipient.
-        $response['status'] = MailWrapper::sendMail(array(
-                                  'body'        => \xd_security\assertParameterSet('message', '/.*/', false),
-                                  'subject'     => "[$title] " . \xd_security\assertParameterSet('subject'),
-                                  'toAddress'   => \xd_utilities\getConfiguration('general', 'contact_page_recipient'),
-                                  'toName'      => 'Undisclosed Recipients',
-                                  'fromAddress' => \xd_utilities\getConfiguration('general', 'contact_page_recipient'),
-                                  'fromName'    => $title,
-                                  'bcc'         => \xd_security\assertParameterSet('target_addresses')
-                              ));
+        $contact = \xd_utilities\getConfiguration('general', 'contact_page_recipient');
+        $mail->addTo($contact, 'Undisclosed Recipients');
+        $mail->setFrom($contact, $title);
+
+        $bcc_emails = explode(',', $target_addresses);
+
+        foreach ($bcc_emails as $b) {
+            $mail->addBcc($b);
+        }
+
+        $mail->setBodyText($message);
+
+        $response['status'] = $mail->send();
+
         break;
     default:
         $response['success'] = false;

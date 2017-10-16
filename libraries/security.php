@@ -200,7 +200,7 @@ function enforceUserRequirements($requirements, $session_variable = 'xdUser')
         if (in_array(SAB_MEMBER, $requirements)) {
 
             // This user must be a member of the Science Advisory Board
-            if (!$user->hasAcl('sab')) {
+            if (!in_array('sab', $user->getRoles())) {
                 $returnData['status']     = 'not_sab_member';
                 $returnData['success']    = false;
                 $returnData['totalCount'] = 0;
