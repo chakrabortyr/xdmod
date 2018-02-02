@@ -184,12 +184,12 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 
 					// ================================================
 
-					if (data.results.is_federated_user) {
-						if (data.results.first_time_login && (data.results.email_address)) {
+					if (data.results.is_federated_user === true) {
+						if (data.results.first_time_login && (data.results.email_address.length === 0)) {
 							// If the user is logging in for the first time and does have an e-mail address set
 							// from the federation welcome the user and inform them they
 							// have an opportunity to update their e-mail address.
-							if (data.results.autoload_suppression) {
+							if (data.results.autoload_suppression === true) {
 								//If the user has updated their profile on first login already, there is no need to suggest an e-mail change
 							}
 							else {
@@ -198,7 +198,7 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 							}
 
 						}
-						else if (data.results.first_time_login && (data.results.email_address.length == 0)) {
+						else if (data.results.first_time_login && (data.results.email_address.length === 0)) {
 							// If the user is logging in for the first time and does *not* have an e-mail address set,
 							// welcome the user and inform them that he/she needs to set an e-mail address.
 
