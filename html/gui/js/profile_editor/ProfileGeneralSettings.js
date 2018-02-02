@@ -184,7 +184,6 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 
 					// ================================================
 
-					//active_layout_index = XDMoD.ProfileEditorConstants.PASSWORD;
 					if (data.results.is_federated_user) {
 						if (data.results.first_time_login && (data.results.email_address)) {
 							// If the user is logging in for the first time and does have an e-mail address set
