@@ -192,7 +192,6 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 							// have an opportunity to update their e-mail address.
 							if (data.results.autoload_suppression) {
 								//If the user has updated their profile on first login already, there is no need to suggest an e-mail change
-								//active_layout_index = XDMoD.ProfileEditorConstants.XSEDE_SPLASH;
 							}
 							else {
 								active_layout_index = XDMoD.ProfileEditorConstants.WELCOME_EMAIL_CHANGE;
@@ -212,10 +211,6 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 							// an e-mail address requires attention
 							active_layout_index = XDMoD.ProfileEditorConstants.EMAIL_NEEDED;
 							XDMoD.Profile.logoutOnClose = true;
-						}
-						else {
-							// The user has logged in at least a second time and has no issues with their e-mail address
-							//active_layout_index = XDMoD.ProfileEditorConstants.XSEDE_SPLASH;
 						}
 
 					} //if (data.results.is_xsede_user == true)
@@ -413,24 +408,6 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 
 			// ------------------------------------------------
 
-			var sectionXSEDESplash = new Ext.Panel({
-
-				labelWidth: 95,
-				frame: false,
-				//title: 'Welcome XSEDE User',
-				bodyStyle: 'padding:0px 5px',
-				width: 350,
-				//defaults: {width: 200},
-				layout: 'form',
-
-				items: [{
-					xtype: 'tbtext',
-					text: renderXSEDEMessage({
-						display_banner: true
-					})
-				}]
-			}); //sectionXSEDESplash
-
 			var sectionFederatedUser = new Ext.Panel({
 				labelWidth: 95,
 				frame: false,
@@ -451,7 +428,7 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 				layout: 'form',
 				items: [{
 					xtype: 'tbtext',
-					text: 'An e-mail address is required in order to use certain features of XDMoD as well as receive important messages from the XDMoD team.'
+					text: 'Please ensure the email listed above is accurate. Your e-mail address is required in order to use certain features of XDMoD as well as receive important messages from the XDMoD team.'
 				}]
 			});
 			// ------------------------------------------------
@@ -471,7 +448,6 @@ XDMoD.ProfileGeneralSettings = Ext.extend(Ext.form.FormPanel, {
 				items: [
 					sectionPassword,
 					sectionFederatedEmail,
-					//sectionXSEDESplash,
 					sectionFederatedUser
 				]
 
