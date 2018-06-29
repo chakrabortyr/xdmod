@@ -22,8 +22,9 @@ use ETL\EtlOverseerOptions;
 
 use Log;
 
-abstract class EventState
+class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iAction
 {
+    // Discrete Event Types
     const START = 2;
     const STOP = 4;
     const TERMINATE = 6;
@@ -32,10 +33,7 @@ abstract class EventState
     const SUSPEND = 17;
     const SHELVE = 19;
     const UNSHELVE = 20;
-}
 
-class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
-{
     private $_stop_event_ids;
     private $_start_event_ids;
     private $_instance_state;
@@ -48,17 +46,15 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
     {
         parent::__construct($options, $etlConfig, $logger);
 
-        $this->_stop_event_ids = array(EventState::STOP, EventState::TERMINATE, EventState::SUSPEND,
-            EventState::SHELVE);
-        $this->_start_event_ids = array(EventState::START, EventState::RESUME, EventState::STATE_REPORT,
-            EventState::UNSHELVE);
+        $this->_stop_event_ids = array(STOP, TERMINATE, SUSPEND, SHELVE);
+        $this->_start_event_ids = array(START, RESUME, STATE_REPORT, UNSHELVE);
         $this->_all_event_ids = array_merge($this->start_event_ids, $this->_stop_event_ids);
         $this->_end_time = $etlConfig->getVariableStore()->end_time;
 
-        $this->resetInstance();
+        $this->_resetInstance();
     }
 
-    private function initInstance($srcRecord) 
+    private function _initInstance($srcRecord)
     {
         $default_end_time = isset($this->_end_time) ? strtotime($this->_end_time) : $srcRecord['event_time_utc'];
 
@@ -66,19 +62,19 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
             'instance_id' => $srcRecord['instance_id'],
             'start_time' => $srcRecord['event_time_utc'],
             'start_event_id' => $srcRecord['event_type_id'],
-            '_end_time' => date('Y-m-d H:i:s', $default_end_time),
-            'end_event_id' => 4
+            'end_time' => date('Y-m-d H:i:s', $default_end_time),
+            'end_event_id' => STOP
         );
     }
 
-    private function resetInstance() 
+    private function _resetInstance()
     {
         $this->_instance_state = null;
     }
 
-    private function updateInstance($srcRecord) 
+    private function _updateInstance($srcRecord)
     {
-        $this->_instance_state['_end_time'] = $srcRecord['event_time_utc'];
+        $this->_instance_state['end_time'] = $srcRecord['event_time_utc'];
         $this->_instance_state['end_event_id'] = $srcRecord['event_type_id'];
     }
 
@@ -93,7 +89,7 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
 
         if ($this->_instance_state === null) {
             if (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
-                $this->initInstance($srcRecord);
+                $this->_initInstance($srcRecord);
             }
             return array();
         }
@@ -102,21 +98,21 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
 
         if ($this->_instance_state['instance_id'] !== $srcRecord['instance_id']) {
             $transformedRecord[] = $this->_instance_state;
-            $this->initInstance($srcRecord);
+            $this->_initInstance($srcRecord);
         }
         elseif (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
-            $this->updateInstance($srcRecord);
+            $this->_updateInstance($srcRecord);
         }
         elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
-            $this->updateInstance($srcRecord);
+            $this->_updateInstance($srcRecord);
             $transformedRecord[] = $this->_instance_state;
-            $this->resetInstance();
+            $this->_resetInstance();
         }
 
         return $transformedRecord;
     }
 
-    protected function getSourceQueryString() 
+    protected function getSourceQueryString()
     {
         $sql = parent::getSourceQueryString();
 
