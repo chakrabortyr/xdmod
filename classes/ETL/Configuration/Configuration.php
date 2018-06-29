@@ -271,11 +271,13 @@ class Configuration extends Loggable implements \Iterator
 
         $this->transform();
 
-        // Add sections for each of the transformed keys
+        // At this point, the only items in the variable store will be those passed in via the
+        // 'config_variables' option which are typically variables supplied on the command line and
+        // have the highest priority. Substitute them in the transformed configuration prior to
+        // calling interpretData() or a child class that extends this method may not get the
+        // substituted value.
 
-        foreach ( $this->transformedConfig as $key => $value ) {
-            $this->addSection($key, $value);
-        }
+        $this->transformedConfig = $this->substituteVariables($this->transformedConfig);
 
         // Perform local interpretation on the data and apply contextual meaning
 
@@ -307,7 +309,12 @@ class Configuration extends Loggable implements \Iterator
                     continue;
                 }
 
-                $localConfigObj = $this->processLocalConfig($this->localConfigDir . "/" . $file);
+                $fullPath = $this->localConfigDir . "/" . $file;
+                try {
+                    $localConfigObj = $this->processLocalConfig($fullPath);
+                } catch ( Exception $e ) {
+                    throw new Exception(sprintf("Processing %s: %s", $fullPath, $e->getMessage()));
+                }
                 $this->merge($localConfigObj);
                 $localConfigObj->cleanup();
 
@@ -391,9 +398,9 @@ class Configuration extends Loggable implements \Iterator
     }  // transform()
 
     /** -----------------------------------------------------------------------------------------
-     * Interpret the transformed data in the configuration file. By default no
-     * interpretation is performed by this class so child classes should override this
-     * method as needed.
+     * Interpret the transformed data in the configuration file. By default the only interpretation
+     * performed is adding transformed configuration sections and data to the section list. Child
+     * classes should override this method as needed.
      *
      * @return Configuration This object to support method chaining.
      * ------------------------------------------------------------------------------------------
@@ -401,6 +408,10 @@ class Configuration extends Loggable implements \Iterator
 
     protected function interpretData()
     {
+        // Add sections for each of the transformed keys
+        foreach ( $this->transformedConfig as $key => $value ) {
+            $this->addSection($key, $value);
+        }
         return $this;
     }  // interpretData()
 
@@ -498,7 +509,7 @@ class Configuration extends Loggable implements \Iterator
 
     protected function postMergeTasks()
     {
-        $this->transformedConfig = $this->substituteVariables($this->transformedConfig);
+
         return $this;
     }  // postMergeTasks()
 

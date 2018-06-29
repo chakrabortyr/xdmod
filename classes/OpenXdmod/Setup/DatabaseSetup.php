@@ -141,13 +141,22 @@ EOT
          *  ETLv2 database bootstrap start
          */
         $scriptOptions = array(
+            'default-module-name' => 'xdmod',
             'process-sections' => array(
-                'xdb.bootstrap',
-                'jobs-xdw.bootstrap'
-            )
+                'xdb-bootstrap',
+                'jobs-xdw-bootstrap',
+                'shredder-bootstrap',
+                'staging-bootstrap',
+                'hpcdb-bootstrap',
+            ),
         );
 
-        $etlConfig = new \ETL\Configuration\EtlConfiguration(CONFIG_DIR . '/etl/etl.json', null, $logger, array());
+        $etlConfig = new \ETL\Configuration\EtlConfiguration(
+            CONFIG_DIR . '/etl/etl.json',
+            null,
+            $logger,
+            array('default_module_name' => $scriptOptions['default-module-name'])
+        );
         $etlConfig->initialize();
         \ETL\Utilities::setEtlConfig($etlConfig);
         $overseerOptions = new \ETL\EtlOverseerOptions($scriptOptions, $logger);
