@@ -1,6 +1,16 @@
 <?php
 /* ==========================================================================================
- */
+* This class simulates a Finite State Machine to reconstruct discrete run cycles of virtual machines.
+* It first grabs a list of raw events, which must then be sorted by instance and time to ensure 
+* proper sequential reconstruction. It then iterates over the sorted list and generates event pairs
+* by taking the first start event it finds for a unique instance id and pairing it with the next stop event.
+*
+* If no stop event is found, either the start event is treated as the stop, or a default stop time may be provided
+* by specifiying an "end_time" variable in the ETL Overseer at the point of ingestion.
+*
+* @author Rudra Chakraborty <rudracha@buffalo.edu>
+* @date 2018-06-29
+*/
 
 namespace ETL\Ingestor;
 
@@ -12,12 +22,24 @@ use ETL\EtlOverseerOptions;
 
 use Log;
 
+abstract class EventState
+{
+    const START = 2;
+    const STOP = 4;
+    const TERMINATE = 6;
+    const RESUME = 8;
+    const STATE_REPORT = 16;
+    const SUSPEND = 17;
+    const SHELVE = 19;
+    const UNSHELVE = 20;
+}
+
 class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
 {
-    private $stop_event_ids;
-    private $start_event_ids;
-    private $instance_state;
-    private $end_time;
+    private $_stop_event_ids;
+    private $_start_event_ids;
+    private $_instance_state;
+    private $_end_time;
 
     /**
      * @see ETL\Ingestor\pdoIngestor::__construct()
@@ -26,33 +48,38 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
     {
         parent::__construct($options, $etlConfig, $logger);
 
-        $this->stop_event_ids = array(4, 6, 17, 19);
-        $this->start_event_ids = array(2, 8, 9, 10, 11, 16);
-        $this->all_event_ids = array_merge($this->start_event_ids, $this->stop_event_ids);
-        $this->end_time = $etlConfig->getVariableStore()->end_time;
+        $this->_stop_event_ids = array(EventState::STOP, EventState::TERMINATE, EventState::SUSPEND,
+            EventState::SHELVE);
+        $this->_start_event_ids = array(EventState::START, EventState::RESUME, EventState::STATE_REPORT,
+            EventState::UNSHELVE);
+        $this->_all_event_ids = array_merge($this->start_event_ids, $this->_stop_event_ids);
+        $this->_end_time = $etlConfig->getVariableStore()->end_time;
 
         $this->resetInstance();
     }
 
-    private function initInstance($srcRecord) {
-        $default_end_time = isset($this->end_time) ? strtotime($this->end_time) : $srcRecord['event_time_utc'];
+    private function initInstance($srcRecord) 
+    {
+        $default_end_time = isset($this->_end_time) ? strtotime($this->_end_time) : $srcRecord['event_time_utc'];
 
-        $this->instance_state = array(
+        $this->_instance_state = array(
             'instance_id' => $srcRecord['instance_id'],
             'start_time' => $srcRecord['event_time_utc'],
             'start_event_id' => $srcRecord['event_type_id'],
-            'end_time' => date('Y-m-d H:i:s', $default_end_time),
+            '_end_time' => date('Y-m-d H:i:s', $default_end_time),
             'end_event_id' => 4
         );
     }
 
-    private function resetInstance() {
-        $this->instance_state = null;
+    private function resetInstance() 
+    {
+        $this->_instance_state = null;
     }
 
-    private function updateInstance($srcRecord) {
-        $this->instance_state['end_time'] = $srcRecord['event_time_utc'];
-        $this->instance_state['end_event_id'] = $srcRecord['event_type_id'];
+    private function updateInstance($srcRecord) 
+    {
+        $this->_instance_state['_end_time'] = $srcRecord['event_time_utc'];
+        $this->_instance_state['end_event_id'] = $srcRecord['event_type_id'];
     }
 
     /**
@@ -60,11 +87,11 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
      */
     protected function transform(array $srcRecord, $orderId)
     {
-        if (!in_array($srcRecord['event_type_id'], $this->all_event_ids)) {
+        if (!in_array($srcRecord['event_type_id'], $this->_all_event_ids)) {
             return array();
         }
 
-        if ($this->instance_state === null) {
+        if ($this->_instance_state === null) {
             if (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
                 $this->initInstance($srcRecord);
             }
@@ -73,44 +100,37 @@ class StateReconstructorTransformIngestor extends pdoIngestor implements iAction
 
         $transformedRecord = array();
 
-        if ($this->instance_state['instance_id'] !== $srcRecord['instance_id']) {
-            $transformedRecord[] = $this->instance_state;
+        if ($this->_instance_state['instance_id'] !== $srcRecord['instance_id']) {
+            $transformedRecord[] = $this->_instance_state;
             $this->initInstance($srcRecord);
         }
-        elseif  (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
+        elseif (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
             $this->updateInstance($srcRecord);
         }
-        elseif (in_array($srcRecord['event_type_id'], $this->stop_event_ids)) {
+        elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
             $this->updateInstance($srcRecord);
-            $transformedRecord[] = $this->instance_state;
+            $transformedRecord[] = $this->_instance_state;
             $this->resetInstance();
         }
 
         return $transformedRecord;
     }
 
-    protected function getSourceQueryString(){
-        if ( null === $this->etlSourceQuery ) {
-            $this->logAndThrowException(
-                "ETL source query object not instantiated.  Perhaps it is not specified in "
-                . "the definition file and not implemented in the Ingestor."
-            );
-        }
-
-        $sql = $this->variableStore->substitute(
-            $this->etlSourceQuery->getSql(),
-            "Undefined macros found in source query"
-        );
+    protected function getSourceQueryString() 
+    {
+        $sql = parent::getSourceQueryString();
 
         // We add a dummy row here to address gimmick wherein ETL discards the last row of data.
         $unionValues = [];
         $colCount = count($this->etlSourceQuery->records);
 
-        while($colCount--){
+        while ($colCount--) {
             $unionValues[] = 0;
         }
 
-        $sql = "SELECT * FROM ( $sql \nORDER BY instance_id ASC, event_time_utc ASC) a\nUNION ALL\nSELECT " . implode(',', $unionValues);
+        $sql = "SELECT * FROM ( $sql \nORDER BY instance_id ASC, event_time_utc ASC) a\nUNION ALL\nSELECT " .
+            implode(',', $unionValues);
+
         return $sql;
     }
 }
