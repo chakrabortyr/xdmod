@@ -1,7 +1,7 @@
 <?php
 /* ==========================================================================================
 * This class simulates a Finite State Machine to reconstruct discrete run cycles of virtual machines.
-* It first grabs a list of raw events, which must then be sorted by instance and time to ensure 
+* It first grabs a list of raw events, which must then be sorted by instance and time to ensure
 * proper sequential reconstruction. It then iterates over the sorted list and generates event pairs
 * by taking the first start event it finds for a unique instance id and pairing it with the next stop event.
 *
@@ -48,7 +48,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
         $this->_stop_event_ids = array(self::STOP, self::TERMINATE, self::SUSPEND, self::SHELVE);
         $this->_start_event_ids = array(self::START, self::RESUME, self::STATE_REPORT, self::UNSHELVE);
-        $this->_all_event_ids = array_merge($this->start_event_ids, $this->_stop_event_ids);
+        $this->_all_event_ids = array_merge($this->_start_event_ids, $this->_stop_event_ids);
         $this->_end_time = $etlConfig->getVariableStore()->end_time;
 
         $this->resetInstance();
@@ -88,7 +88,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
         }
 
         if ($this->_instance_state === null) {
-            if (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
+            if (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
                 $this->initInstance($srcRecord);
             }
             return array();
@@ -100,7 +100,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
             $transformedRecord[] = $this->_instance_state;
             $this->initInstance($srcRecord);
         }
-        elseif (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
+        elseif (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
             $this->updateInstance($srcRecord);
         }
         elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
