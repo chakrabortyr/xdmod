@@ -118,7 +118,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
         // We add a dummy row here to address gimmick wherein ETL discards the last row of data.
         $colCount = count($this->etlSourceQuery->records);
-        $unionValues = array_fill(0, $colCount, 0);;
+        $unionValues = array_fill(0, $colCount, 0);
 
         $sql = "SELECT * FROM ( $sql \nORDER BY instance_id ASC, event_time_utc ASC) a\nUNION ALL\nSELECT " .
             implode(',', $unionValues);
