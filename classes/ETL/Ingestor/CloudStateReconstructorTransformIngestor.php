@@ -46,15 +46,15 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     {
         parent::__construct($options, $etlConfig, $logger);
 
-        $this->_stop_event_ids = array(STOP, TERMINATE, SUSPEND, SHELVE);
-        $this->_start_event_ids = array(START, RESUME, STATE_REPORT, UNSHELVE);
+        $this->_stop_event_ids = array(self::STOP, self::TERMINATE, self::SUSPEND, self::SHELVE);
+        $this->_start_event_ids = array(self::START, self::RESUME, self::STATE_REPORT, self::UNSHELVE);
         $this->_all_event_ids = array_merge($this->start_event_ids, $this->_stop_event_ids);
         $this->_end_time = $etlConfig->getVariableStore()->end_time;
 
-        $this->_resetInstance();
+        $this->resetInstance();
     }
 
-    private function _initInstance($srcRecord)
+    private function initInstance($srcRecord)
     {
         $default_end_time = isset($this->_end_time) ? strtotime($this->_end_time) : $srcRecord['event_time_utc'];
 
@@ -63,16 +63,16 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
             'start_time' => $srcRecord['event_time_utc'],
             'start_event_id' => $srcRecord['event_type_id'],
             'end_time' => date('Y-m-d H:i:s', $default_end_time),
-            'end_event_id' => STOP
+            'end_event_id' => self::STOP
         );
     }
 
-    private function _resetInstance()
+    private function resetInstance()
     {
         $this->_instance_state = null;
     }
 
-    private function _updateInstance($srcRecord)
+    private function updateInstance($srcRecord)
     {
         $this->_instance_state['end_time'] = $srcRecord['event_time_utc'];
         $this->_instance_state['end_event_id'] = $srcRecord['event_type_id'];
@@ -89,7 +89,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
         if ($this->_instance_state === null) {
             if (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
-                $this->_initInstance($srcRecord);
+                $this->initInstance($srcRecord);
             }
             return array();
         }
@@ -98,15 +98,15 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
         if ($this->_instance_state['instance_id'] !== $srcRecord['instance_id']) {
             $transformedRecord[] = $this->_instance_state;
-            $this->_initInstance($srcRecord);
+            $this->initInstance($srcRecord);
         }
         elseif (in_array($srcRecord['event_type_id'], $this->start_event_ids)) {
-            $this->_updateInstance($srcRecord);
+            $this->updateInstance($srcRecord);
         }
         elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
-            $this->_updateInstance($srcRecord);
+            $this->updateInstance($srcRecord);
             $transformedRecord[] = $this->_instance_state;
-            $this->_resetInstance();
+            $this->resetInstance();
         }
 
         return $transformedRecord;
@@ -117,12 +117,8 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
         $sql = parent::getSourceQueryString();
 
         // We add a dummy row here to address gimmick wherein ETL discards the last row of data.
-        $unionValues = [];
         $colCount = count($this->etlSourceQuery->records);
-
-        while ($colCount--) {
-            $unionValues[] = 0;
-        }
+        $unionValues = array_fill(0, $colCount, 0);;
 
         $sql = "SELECT * FROM ( $sql \nORDER BY instance_id ASC, event_time_utc ASC) a\nUNION ALL\nSELECT " .
             implode(',', $unionValues);
