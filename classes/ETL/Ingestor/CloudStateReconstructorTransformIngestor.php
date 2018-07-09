@@ -116,7 +116,8 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     {
         $sql = parent::getSourceQueryString();
 
-        // We add a dummy row here to address gimmick wherein ETL discards the last row of data.
+        // The ETL process has a glitch where the last row of data is discarded at ingestion time. To work around
+        // this we do a union to add a dummy row filled with zeroes.       
         $colCount = count($this->etlSourceQuery->records);
         $unionValues = array_fill(0, $colCount, 0);
 
