@@ -99,11 +99,9 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
         if ($this->_instance_state['instance_id'] !== $srcRecord['instance_id']) {
             $transformedRecord[] = $this->_instance_state;
             $this->initInstance($srcRecord);
-        }
-        elseif (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
+        } elseif (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
             $this->updateInstance($srcRecord);
-        }
-        elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
+        } elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
             $this->updateInstance($srcRecord);
             $transformedRecord[] = $this->_instance_state;
             $this->resetInstance();
@@ -116,13 +114,12 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     {
         $sql = parent::getSourceQueryString();
 
-        // The ETL process has a glitch where the last row of data is discarded at ingestion time. To work around
-        // this we do a union to add a dummy row filled with zeroes.       
+        // Due to the way the FSM handles the rows in event reconstruction, the last row
+        // is lost. To work around this we add a dummy row filled with zeroes.
         $colCount = count($this->etlSourceQuery->records);
         $unionValues = array_fill(0, $colCount, 0);
 
-        $sql = "SELECT * FROM ( $sql \nORDER BY instance_id ASC, event_time_utc ASC) a\nUNION ALL\nSELECT " .
-            implode(',', $unionValues);
+        $sql = "$sql \nUNION ALL\nSELECT " . implode(',', $unionValues) . "\nORDER BY 1 DESC, 2 ASC";
 
         return $sql;
     }
