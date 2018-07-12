@@ -114,7 +114,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     {
         $sql = parent::getSourceQueryString();
 
-        // Due to the way the FSM handles the rows in event reconstruction, the last row
+        // Due to the way the Finite State Machine handles the rows in event reconstruction, the last row
         // is lost. To work around this we add a dummy row filled with zeroes.
         $colCount = count($this->etlSourceQuery->records);
         $unionValues = array_fill(0, $colCount, 0);
