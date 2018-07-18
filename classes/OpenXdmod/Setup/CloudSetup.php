@@ -26,7 +26,8 @@ class CloudSetup extends SubMenuSetupItem
         parent::__construct($console);
 
         $items = array(
-            new MenuItem('q', 'Quit Cloud Metrics Setup', new SubMenuQuitSetup($console, $this)),
+            new MenuItem('i', 'Install Cloud Metrics', new CloudSetupItem($console, $this)),
+            new MenuItem('q', 'Quit Cloud Metrics Setup', new SubMenuQuitSetup($console, $this))
         );
 
         $this->menu = new Menu($items, $this->console, 'Cloud Metrics Setup');
