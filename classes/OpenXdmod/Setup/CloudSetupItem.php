@@ -30,6 +30,5 @@ class CloudSetupItem extends SetupItem
 
         $this->console->displayMessage("Installing Cloud Metrics...");
         $this->console->displayBlankLine();
-        }
     }
 }
