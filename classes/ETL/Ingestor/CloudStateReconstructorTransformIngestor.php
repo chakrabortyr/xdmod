@@ -85,9 +85,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     {
         // We want to just flush when we hit the dummy row
         if ($srcRecord['event_type_id'] === 0) {
-            $transformedRecord = array();
-            $transformedRecord[] = $this->_instance_state;
-            return $transformedRecord;
+            return array($this->_instance_state);
         }
 
         if (!in_array($srcRecord['event_type_id'], $this->_all_event_ids)) {
