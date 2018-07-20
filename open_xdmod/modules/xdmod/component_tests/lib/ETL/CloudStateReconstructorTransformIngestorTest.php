@@ -23,8 +23,25 @@ class CloudStateReconstructorTransformIngestorTest extends \PHPUnit_Framework_Te
         "end_event_id" => -1
     );
 
-    private $invalid_event = array(
+    private $valid_end_event = array(
         "instance_id" => 2343,
+        "event_time_utc" => "2018-02-07 17:09:01",
+        "event_type_id" => 4,
+        "start_event_id" => -1,
+        "end_time" => -1,
+        "end_event_id" => -1
+    );
+
+    private $valid_transform = array(
+        "instance_id" => 2343,
+        "start_time" => "2018-02-06 17:09:01",
+        "start_event_id" => 2,
+        "end_time" => "2018-02-07 17:09:01",
+        "end_event_id" => 4
+    );
+
+    private $invalid_event = array(
+        "instance_id" => -1,
         "event_time_utc" => "2018-02-06 17:09:01",
         "event_type_id" => 29,
         "start_event_id" => -1,
@@ -48,7 +65,10 @@ class CloudStateReconstructorTransformIngestorTest extends \PHPUnit_Framework_Te
     }
 
     protected function testValidTransformation() {
-        $this->assertEquals($this->valid_event, $this->fsm::transform($this->valid_event, 1));
+        $this->fsm::transform($this->valid_event, 1);
+        $event = $this->fsm::transform($this->valid_end_event, 1);
+        
+        $this->assertEquals($this->valid_transform, $event);
     }
 
     protected function testInvalidTransformation() {
