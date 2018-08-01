@@ -981,6 +981,10 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
                 }
 
                 if (decodedResponse) {
+                    if (Ext.isGecko) {
+                        Ext.getCmp('local_login_submit').fireEvent('click');
+                    }
+
                     XDMoD.TrackEvent('Login Window', 'Successful login', txtLoginUsername.getValue());
                     XDMoD.REST.token = data.results.token;
                     presentLoginResponse('Welcome, ' + Ext.util.Format.htmlEncode(data.results.name) + '.', true, 'login_response');
@@ -1007,7 +1011,13 @@ CCR.xdmod.ui.actionLogin = function (config, animateTarget) {
     var localLoginItems = [txtLoginUsername, txtLoginPassword, {
         xtype: 'tbtext',
         id: 'login_response'
-    }, new Ext.Container({
+    },
+        {
+            xtype: 'field',
+            id: 'local_login_submit',
+            autoCreate: {tag: "input", type: "submit"},
+            hidden: true
+        }, new Ext.Container({
         anchor: 'form',
         autoWidth: true,
         autoHeight: true,
