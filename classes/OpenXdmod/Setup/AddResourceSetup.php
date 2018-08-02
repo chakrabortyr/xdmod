@@ -55,6 +55,9 @@ EOT
         );
         $this->console->displayBlankLine();
 
+        $type = $this->console->prompt('What type of resource is this?', '1', array('1', '2'));
+        if (empty($type) || !is_numeric($type)) { $type = 1; }
+
         $nodes = $this->console->prompt('How many nodes does this resource have?');
         if (empty($nodes) || !is_numeric($nodes)) { $nodes = 1; }
 
@@ -70,6 +73,7 @@ EOT
                 'processors' => (int)$cpus,
                 'nodes'      => (int)$nodes,
                 'ppn'        => (int)$ppn,
+                'type'       => (int)$type
             )
         );
     }

@@ -119,7 +119,7 @@ class ResourcesSetup extends SubMenuSetupItem
     {
         $this->resources[] = array(
             'resource'         => $resource['resource'],
-            'resource_type_id' => 1,
+            'resource_type_id' => $resource['type'],
             'name'             => $resource['name'],
         );
 
