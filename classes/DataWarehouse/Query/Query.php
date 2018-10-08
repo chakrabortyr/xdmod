@@ -551,18 +551,6 @@ class Query
         $this->_duration_formula = $field;
     }
 
-    protected $_min_date_id;
-    protected $_max_date_id;
-
-    public function getMinDateId()
-    {
-        return $this->_min_date_id;
-    }
-    public function getMaxDateId()
-    {
-        return $this->_max_date_id;
-    }
-
     public function executeRaw($limit = NULL, $offset = NULL)
     {
         $query_string = $this->getQueryString($limit,  $offset);
@@ -1401,7 +1389,6 @@ class Query
                                $end_date_parsed['month'],
                                $end_date_parsed['day'],
                                $end_date_parsed['year']);
-        list($this->_min_date_id, $this->_max_date_id) = $this->_aggregation_unit->getDateRangeIds($this->_start_date, $this->_end_date);
 
         if (!$start_date_given && !$end_date_given) {
             return;
@@ -1414,25 +1401,13 @@ class Query
         $date_id_field = new \DataWarehouse\Query\Model\TableField($this->_date_table,'id');
 		$data_table_date_id_field = new \DataWarehouse\Query\Model\TableField($this->_data_table,"{$this->_aggregation_unit}_id");
 
-        $this->addWhereCondition(new \DataWarehouse\Query\Model\WhereCondition($date_id_field,
-                                                    '=',
-                                                    $data_table_date_id_field
-                                                    )
-                                );
-        $this->addWhereCondition(new \DataWarehouse\Query\Model\WhereCondition($data_table_date_id_field,
-                                                    'between',
-                                                    new \DataWarehouse\Query\Model\Field("{$this->_min_date_id} and {$this->_max_date_id}")
-                                                    )
-                                );
-        /*$this->addWhereCondition(new \DataWarehouse\Query\Model\WhereCondition($data_table_date_id_field,
-                                                    '<=',
-                                                    new \DataWarehouse\Query\Model\Field("{$this->_max_date_id}")
-                                                    )
-                                );*/
-
-
-        $duration_query = " select sum(dd.hours) as duration from modw.{$this->_aggregation_unit}s dd where  dd.id between {$this->_min_date_id} and {$this->_max_date_id} ";
-
+        $this->addWhereCondition(new \DataWarehouse\Query\Model\WhereCondition(
+            $date_id_field,
+            '=',
+            $data_table_date_id_field
+        ));
+                                
+        $duration_query = "select sum(dd.hours) as duration from modw.{$this->_aggregation_unit}s dd";
         $duration_result = DB::factory($this->_db_profile)->query($duration_query);
 
         $this->setDurationFormula(new \DataWarehouse\Query\Model\Field("(".($duration_result[0]['duration'] == ''?1:$duration_result[0]['duration']).")"));
