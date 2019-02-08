@@ -1,0 +1,67 @@
+{
+    "module": "xdmod",
+    "migration-8_0_0-8_1_0": [
+        {
+            "name": "update-cloud-tables",
+            "description": "Update tables for 8.1",
+            "namespace": "ETL\\Maintenance",
+            "class": "ManageTables",
+            "options_class": "MaintenanceOptions",
+            "definition_file_list": [
+                "cloud_common/cloud_transient.json",
+                "cloud_common/event.json",
+                "cloud_common/event_reconstructed.json"
+            ],
+            "endpoints": {
+                "destination": {
+                    "type": "mysql",
+                    "name": "Data Warehouse",
+                    "config": "datawarehouse",
+                    "schema": "modw_cloud"
+                }
+            }
+        },
+        {
+            "name": "modw-schema-version-history",
+            "description": "Update modw schema version history",
+            "namespace": "ETL\\Ingestor",
+            "class": "StructuredFileIngestor",
+            "options_class": "IngestorOptions",
+            "definition_file": "jobs/xdw/schema-version-history.json",
+            "endpoints": {
+                "source": {
+                    "type": "jsonfile",
+                    "name": "Schema version history",
+                    "path": "migrations/8.0.0-8.1.0/xdw/schema-version-history.json"
+                },
+                "destination": {
+                    "type": "mysql",
+                    "name": "Data Warehouse",
+                    "config": "datawarehouse",
+                    "schema": "modw"
+                }
+            }
+        },
+        {
+            "name": "modw-cloud-schema-version-history",
+            "description": "Update modw_cloud schema version history",
+            "namespace": "ETL\\Ingestor",
+            "class": "StructuredFileIngestor",
+            "options_class": "IngestorOptions",
+            "definition_file": "cloud_common/schema-version-history.json",
+            "endpoints": {
+                "source": {
+                    "type": "jsonfile",
+                    "name": "Schema version history",
+                    "path": "migrations/8.0.0-8.1.0/cloud_common/schema-version-history.json"
+                },
+                "destination": {
+                    "type": "mysql",
+                    "name": "Data Warehouse",
+                    "config": "datawarehouse",
+                    "schema": "modw_cloud"
+                }
+            }
+        }
+    ]
+}
