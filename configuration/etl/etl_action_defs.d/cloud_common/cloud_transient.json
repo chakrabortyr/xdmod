@@ -21,7 +21,8 @@
             "start_day_id": "YEAR(e.start_time) * 100000 + DAYOFYEAR(e.start_time)",
             "end_day_id": "YEAR(e.end_time) * 100000 + DAYOFYEAR(e.end_time)",
             "wallduration": "UNIX_TIMESTAMP(e.end_time) - UNIX_TIMESTAMP(e.start_time)",
-            "submission_venue_id": "ev.submission_venue_id"
+            "submission_venue_id": "ev.submission_venue_id",
+            "last_modified": "e.last_modified"
         },
         "joins": [
             {

@@ -74,7 +74,8 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
             'start_time' => $srcRecord['event_time_utc'],
             'start_event_id' => $srcRecord['event_type_id'],
             'end_time' => $default_end_time,
-            'end_event_id' => self::STOP
+            'end_event_id' => self::STOP,
+            'last_modified' => $this->_last_modified
         );
     }
 
