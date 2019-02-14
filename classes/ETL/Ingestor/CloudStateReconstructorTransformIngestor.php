@@ -129,7 +129,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
             $this->initInstance($srcRecord);
         } elseif (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
             $this->updateInstance($srcRecord);
-        } elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids) && !foundFirstStop()) {
+        } elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids) && !$this->foundFirstStop()) {
             $this->updateInstance($srcRecord);
             $transformedRecord[] = $this->_instance_state;
             $this->resetInstance();
