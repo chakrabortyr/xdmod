@@ -64,6 +64,13 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
         $this->resetInstance();
     }
 
+    private function foundFirstStop()
+    {
+        $default_end_time = isset($this->_end_time) ? $this->_end_time : $this->_instance_state['event_time_utc'];
+
+        return in_array($this->_stop_event_ids, $this->_instance_state['end_event_id']) && $this->_instance_state['end_time'] !== $default_end_time;
+    }
+
     private function initInstance($srcRecord)
     {
         $default_end_time = isset($this->_end_time) ? $this->_end_time : $srcRecord['event_time_utc'];
@@ -122,7 +129,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
             $this->initInstance($srcRecord);
         } elseif (in_array($srcRecord['event_type_id'], $this->_start_event_ids)) {
             $this->updateInstance($srcRecord);
-        } elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids)) {
+        } elseif (in_array($srcRecord['event_type_id'], $this->_stop_event_ids) && !foundFirstStop()) {
             $this->updateInstance($srcRecord);
             $transformedRecord[] = $this->_instance_state;
             $this->resetInstance();
