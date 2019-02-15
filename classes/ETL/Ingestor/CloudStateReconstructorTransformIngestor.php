@@ -66,9 +66,10 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
     private function foundFirstStop()
     {
-        $default_end_time = isset($this->_end_time) ? $this->_end_time : $this->_instance_state['event_time_utc'];
+        $default_end_time = isset($this->_end_time) ? $this->_end_time : $this->_instance_state['start_time'];
 
-        return in_array($this->_stop_event_ids, $this->_instance_state['end_event_id']) && $this->_instance_state['end_time'] !== $default_end_time;
+        return in_array($this->_instance_state['end_event_id'], $this->_stop_event_ids) && 
+        $this->_instance_state['end_time'] !== $default_end_time;
     }
 
     private function initInstance($srcRecord)
