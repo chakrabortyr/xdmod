@@ -47,6 +47,7 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
     private $_instance_state;
     private $_end_time;
     private $_last_modified;
+    private $_default_end_time;
 
     /**
      * @see ETL\Ingestor\pdoIngestor::__construct()
@@ -66,22 +67,19 @@ class CloudStateReconstructorTransformIngestor extends pdoIngestor implements iA
 
     private function foundFirstStop()
     {
-        $default_end_time = isset($this->_end_time) ? $this->_end_time : $this->_instance_state['start_time'];
-
-        return in_array($this->_instance_state['end_event_id'], $this->_stop_event_ids) && 
-        $this->_instance_state['end_time'] !== $default_end_time;
+        return $this->_instance_state['end_time'] !== $this->_default_end_time;
     }
 
     private function initInstance($srcRecord)
     {
-        $default_end_time = isset($this->_end_time) ? $this->_end_time : $srcRecord['event_time_utc'];
+        $this->_default_end_time = isset($this->_end_time) ? $this->_end_time : $srcRecord['event_time_utc'];
 
         $this->_instance_state = array(
             'resource_id' => $srcRecord['resource_id'],
             'instance_id' => $srcRecord['instance_id'],
             'start_time' => $srcRecord['event_time_utc'],
             'start_event_id' => $srcRecord['event_type_id'],
-            'end_time' => $default_end_time,
+            'end_time' => $this->_default_end_time,
             'end_event_id' => self::STOP,
             'last_modified' => $this->_last_modified
         );
