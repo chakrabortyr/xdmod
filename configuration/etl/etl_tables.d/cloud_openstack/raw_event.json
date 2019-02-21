@@ -22,9 +22,9 @@
             },
             {
                 "name": "event_time_utc",
-                "type": "datetime",
+                "type": "decimal(18,6)",
                 "nullable": false,
-                "default": "0000-00-00 00:00:00",
+                "default": "00.0000",
                 "comment": "The time of the event in UTC."
             },
             {

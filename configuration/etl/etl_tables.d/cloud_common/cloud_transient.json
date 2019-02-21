@@ -16,7 +16,7 @@
             },
             {
                 "name": "start_time",
-                "type": "datetime",
+                "type": "decimal(18,6)",
                 "nullable": false
             },
             {
@@ -26,7 +26,7 @@
             },
             {
                 "name": "end_time",
-                "type": "datetime",
+                "type": "decimal(18,6)",
                 "nullable": false
             },
             {
