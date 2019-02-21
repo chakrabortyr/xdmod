@@ -58,14 +58,14 @@
             },
             {
                 "name": "start_time",
-                "type": "datetime",
+                "type": "decimal(16, 6)",
                 "nullable": false,
-                "default": "0000-00-00 00:00:00",
+                "default": 0,
                 "comment": "First time that this configuration was seen, defaults to unknown."
             },
             {
                 "name": "end_time",
-                "type": "datetime",
+                "type": "decimal(16, 6)",
                 "nullable": true,
                 "default": null,
                 "comment": "End time for this configuration, NULL if it is still in effect."

@@ -54,9 +54,9 @@
             },
             {
                 "name": "start_time",
-                "type": "datetime",
+                "type": "decimal(16, 6)",
                 "nullable": true,
-                "default": "0000-00-00 00:00:00",
+                "default": 0,
                 "comment": "First time this configuration was encountered, defaults to unknown."
             }
         ],

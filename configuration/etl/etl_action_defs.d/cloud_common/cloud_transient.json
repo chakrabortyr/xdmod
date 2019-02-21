@@ -16,11 +16,11 @@
             "num_cores": "itt.num_cores",
             "memory_mb": "itt.memory_mb",
             "disk_gb": "itt.disk_gb",
-            "start_time_ts": "UNIX_TIMESTAMP(e.start_time)",
-            "end_time_ts": "UNIX_TIMESTAMP(e.end_time)",
+            "start_time_ts": "FLOOR(e.start_time)",
+            "end_time_ts": "FLOOR(e.end_time)",
             "start_day_id": "YEAR(e.start_time) * 100000 + DAYOFYEAR(e.start_time)",
             "end_day_id": "YEAR(e.end_time) * 100000 + DAYOFYEAR(e.end_time)",
-            "wallduration": "UNIX_TIMESTAMP(e.end_time) - UNIX_TIMESTAMP(e.start_time)",
+            "wallduration": "FLOOR(e.end_time) - FLOOR(e.start_time)",
             "submission_venue_id": "ev.submission_venue_id"
         },
         "joins": [

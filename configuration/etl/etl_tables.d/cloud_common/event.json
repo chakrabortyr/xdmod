@@ -29,7 +29,7 @@
                 "name": "event_time_utc",
                 "type": "decimal(18,6)",
                 "nullable": false,
-                "default": "00.0000"
+                "default": "0"
             },
             {
                 "name": "event_type_id",
