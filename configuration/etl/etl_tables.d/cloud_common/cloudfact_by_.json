@@ -106,6 +106,16 @@
                 "nullable": true,
                 "comment": "FACT: Number of sessions ended over a given period."
             },{
+                "name": "num_sessions_ended_blocked",
+                "type": "int(11)",
+                "nullable": true,
+                "comment": "FACT: Number of sessions ended over a given period where resources were still reserved by VM."
+            },{
+                "name": "num_sessions_ended_released",
+                "type": "int(11)",
+                "nullable": true,
+                "comment": "FACT: Number of sessions ended over a given period where resources were returned to cloud."
+            },{
                 "name": "wallduration",
                 "type": "decimal(18,0)",
                 "nullable": true,

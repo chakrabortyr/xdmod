@@ -42,6 +42,8 @@
                 "disk_gb": "SUM(cet.disk_gb)",
                 "num_sessions_started": "SUM(IF(cet.start_day_id BETWEEN ${:PERIOD_START_DAY_ID} AND ${:PERIOD_END_DAY_ID}, 1, 0))",
                 "num_sessions_ended": "SUM(IF(cet.end_day_id BETWEEN ${:PERIOD_START_DAY_ID} AND ${:PERIOD_END_DAY_ID}, 1, 0))",
+                "num_sessions_ended_blocked": "SUM(IF(cet.end_day_id BETWEEN ${:PERIOD_START_DAY_ID} AND ${:PERIOD_END_DAY_ID} AND cet.end_event_type_id IN (6, 19), 1, 0))",
+                "num_sessions_ended_released": "SUM(IF(cet.end_day_id BETWEEN ${:PERIOD_START_DAY_ID} AND ${:PERIOD_END_DAY_ID} AND cet.end_event_type_id IN (4, 17, 45, 55), 1, 0))",
                 "num_sessions_running": "SUM(1)",
                 "wallduration": "COALESCE(SUM(${wallduration_case_statement}), 0)",
                 "submission_venue_id": "cet.submission_venue_id"
