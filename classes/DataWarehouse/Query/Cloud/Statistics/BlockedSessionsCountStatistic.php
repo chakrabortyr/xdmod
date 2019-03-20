@@ -12,7 +12,7 @@ class BlockedSessionsCountStatistic extends \DataWarehouse\Query\Cloud\Statistic
     public function __construct($query_instance = null)
     {
         parent::__construct(
-            'COALESCE(SUM(jf.num_sessions_ended), 0)',
+            'COALESCE(SUM(jf.num_sessions_ended_blocked), 0)',
             'cloud_num_sessions_ended_blocked',
             'Number of Sessions Ended (Blocked)',
             'Number of Sessions',

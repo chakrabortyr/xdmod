@@ -12,7 +12,7 @@ class ReleasedSessionsCountStatistic extends \DataWarehouse\Query\Cloud\Statisti
     public function __construct($query_instance = null)
     {
         parent::__construct(
-            'COALESCE(SUM(jf.num_sessions_ended), 0)',
+            'COALESCE(SUM(jf.num_sessions_ended_released), 0)',
             'cloud_num_sessions_ended_released',
             'Number of Sessions Ended (Released)',
             'Number of Sessions',
