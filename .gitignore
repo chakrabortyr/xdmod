@@ -4,6 +4,7 @@
 *.orig
 *.log
 *.rej
+*.sarif
 
 # Ignore paths that contain generated content.
 cache/
@@ -345,3 +346,4 @@ launch.json
 
 # Include test specific diff changes
 !/tests/ci/diff/*.diff
+
