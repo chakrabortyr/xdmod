@@ -115,7 +115,7 @@
         "timeframe": "month",
         "user_types": "3"
       },
-      "output": "get_user_visits_month_3",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -247,7 +247,7 @@
         "timeframe": "month",
         "user_types": "5"
       },
-      "output": "get_user_visits_month_5",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -544,7 +544,7 @@
         "timeframe": "month",
         "user_types": "700,1"
       },
-      "output": "get_user_visits_month_700_1",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -577,7 +577,7 @@
         "timeframe": "month",
         "user_types": "700,2"
       },
-      "output": "get_user_visits_month_700_2-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -610,7 +610,7 @@
         "timeframe": "month",
         "user_types": "700,2,1"
       },
-      "output": "get_user_visits_month_700_2_1-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -643,7 +643,7 @@
         "timeframe": "month",
         "user_types": "700,3"
       },
-      "output": "get_user_visits_month_700_3",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -676,7 +676,7 @@
         "timeframe": "month",
         "user_types": "700,3,1"
       },
-      "output": "get_user_visits_month_700_3_1",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -709,7 +709,7 @@
         "timeframe": "month",
         "user_types": "700,3,2"
       },
-      "output": "get_user_visits_month_700_3_2-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -742,7 +742,7 @@
         "timeframe": "month",
         "user_types": "700,3,2,1"
       },
-      "output": "get_user_visits_month_700_3_2_1-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -775,7 +775,7 @@
         "timeframe": "month",
         "user_types": "700,5"
       },
-      "output": "get_user_visits_month_700_5",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -808,7 +808,7 @@
         "timeframe": "month",
         "user_types": "700,5,1"
       },
-      "output": "get_user_visits_month_700_5_1",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -841,7 +841,7 @@
         "timeframe": "month",
         "user_types": "700,5,2"
       },
-      "output": "get_user_visits_month_700_5_2-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -874,7 +874,7 @@
         "timeframe": "month",
         "user_types": "700,5,2,1"
       },
-      "output": "get_user_visits_month_700_5_2_1-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -907,7 +907,7 @@
         "timeframe": "month",
         "user_types": "700,5,3"
       },
-      "output": "get_user_visits_month_700_5_3",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -940,7 +940,7 @@
         "timeframe": "month",
         "user_types": "700,5,3,1"
       },
-      "output": "get_user_visits_month_700_5_3_1",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -973,7 +973,7 @@
         "timeframe": "month",
         "user_types": "700,5,3,2"
       },
-      "output": "get_user_visits_month_700_5_3_2-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
@@ -1006,7 +1006,7 @@
         "timeframe": "month",
         "user_types": "700,5,3,2,1"
       },
-      "output": "get_user_visits_month_700_5_3_2_1-add_user",
+      "output": "get_user_visits_month_1",
       "success": true,
       "content_type": "text/html; charset=UTF-8"
     }
